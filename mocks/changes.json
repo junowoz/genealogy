@@ -1,0 +1,25 @@
+{
+  "K-123": [
+    {
+      "id": "chg-1",
+      "type": "Name",
+      "at": "2023-01-05T12:34:56Z",
+      "by": "user:alice",
+      "field": "name",
+      "oldValue": "Ignacio Souza Gouvea",
+      "newValue": "Inácio de Souza Gouvêa",
+      "fsChangeUrl": "https://www.familysearch.org/tree/person/changes/K-123?change=chg-1"
+    },
+    {
+      "id": "chg-2",
+      "type": "Birth",
+      "at": "2023-03-12T09:12:00Z",
+      "by": "user:bob",
+      "field": "birthYear",
+      "oldValue": "1860",
+      "newValue": "1861",
+      "fsChangeUrl": "https://www.familysearch.org/tree/person/changes/K-123?change=chg-2"
+    }
+  ]
+}
+

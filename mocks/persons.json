@@ -1,0 +1,62 @@
+{
+  "persons": [
+    {
+      "id": "K-123",
+      "name": "Inácio de Souza Gouvêa",
+      "gender": "Male",
+      "birthYear": 1861,
+      "deathYear": 1930,
+      "lifespan": "1861–1930",
+      "primaryPlace": {
+        "id": "place:sp-sao-paulo",
+        "displayName": "São Paulo, São Paulo, Brazil",
+        "jurisdictionPath": ["place:sp", "place:br"]
+      },
+      "father": { "name": "Manoel de Souza Gouvêa" },
+      "mother": { "name": "Maria da Conceição" },
+      "spouse": { "name": "Ana Pereira" },
+      "fsUrl": "https://www.familysearch.org/tree/person/details/K-123"
+    },
+    {
+      "id": "L-456",
+      "name": "Ignacio de Souza Gouveia",
+      "gender": "Male",
+      "birthYear": 1863,
+      "lifespan": "1863–",
+      "primaryPlace": {
+        "id": "place:mg-ouro-preto",
+        "displayName": "Ouro Preto, Minas Gerais, Brazil",
+        "jurisdictionPath": ["place:mg", "place:br"]
+      },
+      "spouse": { "name": "Anna Pereira" },
+      "fsUrl": "https://www.familysearch.org/tree/person/details/L-456"
+    },
+    {
+      "id": "M-789",
+      "name": "Inacio Souza Gouvea",
+      "gender": "Male",
+      "birthYear": 1856,
+      "lifespan": "1856–",
+      "primaryPlace": {
+        "id": "place:sp",
+        "displayName": "São Paulo, Brazil",
+        "jurisdictionPath": ["place:br"]
+      },
+      "fsUrl": "https://www.familysearch.org/tree/person/details/M-789"
+    },
+    {
+      "id": "N-111",
+      "name": "João Gouvêa de Souza",
+      "gender": "Male",
+      "birthYear": 1860,
+      "lifespan": "1860–",
+      "primaryPlace": {
+        "id": "place:ba-nazare",
+        "displayName": "Nazaré, Bahia, Brazil",
+        "jurisdictionPath": ["place:ba", "place:br"]
+      },
+      "fsUrl": "https://www.familysearch.org/tree/person/details/N-111"
+    }
+  ]
+}
+
