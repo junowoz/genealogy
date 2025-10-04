@@ -1,0 +1,10 @@
+numpy
+opencv-python-headless
+Pillow
+python-dateutil
+rapidfuzz
+uvloop; sys_platform == 'linux'
+ujson
+orjson
+typer
+rich

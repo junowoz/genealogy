@@ -20,8 +20,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <div className="text-xl font-semibold tracking-tight">Genearchive</div>
                 <div className="text-xs text-muted">MVP • Read-only • Mocks</div>
               </div>
-              <div className="flex items-center gap-2">
-                <a className="text-sm underline decoration-dotted underline-offset-4" href="https://www.familysearch.org/" target="_blank" rel="noreferrer">Abrir FamilySearch</a>
+              <div className="flex items-center gap-4 text-sm">
+                <a className="underline decoration-dotted underline-offset-4" href="/">Busca</a>
+                <a className="underline decoration-dotted underline-offset-4" href="/memories">Memories</a>
+                <a className="underline decoration-dotted underline-offset-4" href="https://www.familysearch.org/" target="_blank" rel="noreferrer">Abrir FamilySearch</a>
                 <ThemeToggle />
               </div>
             </header>

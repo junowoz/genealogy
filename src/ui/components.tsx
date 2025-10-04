@@ -21,12 +21,13 @@ export function Section({ title, description, children }: { title: string; descr
   );
 }
 
-export function Button({ children, onClick, type = 'button', variant = 'default', className = '' }: {
+export function Button({ children, onClick, type = 'button', variant = 'default', className = '', disabled = false }: {
   children: React.ReactNode;
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   type?: 'button' | 'submit' | 'reset';
   variant?: 'default' | 'ghost' | 'outline';
   className?: string;
+  disabled?: boolean;
 }) {
   const base = 'inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50';
   const variants: Record<string, string> = {
@@ -35,7 +36,7 @@ export function Button({ children, onClick, type = 'button', variant = 'default'
     outline: 'border border-border text-[hsl(var(--fg))] hover:bg-black/5 dark:hover:bg-white/10',
   };
   return (
-    <button type={type} onClick={onClick} className={`${base} ${variants[variant]} ${className}`}>{children}</button>
+    <button type={type} onClick={onClick} disabled={disabled} className={`${base} ${variants[variant]} ${className}`}>{children}</button>
   );
 }
 
@@ -97,4 +98,3 @@ export function ThemeToggle() {
     </Button>
   );
 }
-

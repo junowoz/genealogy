@@ -49,3 +49,7 @@ prod.env
 next-env.d.ts
 
 node_modules
+uploads/
+queue/
+workers/**/.venv/
+workers/**/__pycache__/

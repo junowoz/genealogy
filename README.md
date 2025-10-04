@@ -99,3 +99,50 @@ Limitações conhecidas (MVP)
 - Ranking baseline; não usa sinais de qualidade/coverage de fonte.
 - Sem paginação real nas rotas mock.
 
+---
+
+Próximo passo nº 2: Memories AI Ingestor (skeleton incluído)
+
+Objetivo
+
+- “Suba a foto/PDF → eu leio, extraio nomes/datas/lugares, proponho pessoas e crio a citação”, mantendo compatibilidade (read‑only + redirects para ações no FS).
+
+O que já vem pronto neste repo
+
+- Contratos do NER/OCR e ingestão em `src/domain/memories.ts`:1
+- SQL schema (PostgreSQL) para uploads, jobs, entidades, sugestões e citação em `db/schema.sql`:1
+- API routes (mock + file queue):
+  - `POST /api/memories/upload` — multipart/form-data (`file`); salva em `uploads/`
+  - `POST /api/memories/jobs` — cria job (grava `queue/pending/<id>.json`)
+  - `GET /api/memories/jobs/:id` — status (queued/processing/completed/failed) + resultado
+- Worker Python (fila de arquivos):
+  - `workers/memories/worker.py`:1 — observa `queue/pending/`, processa e grava `queue/results/`
+  - `workers/memories/pipeline.py`:1 — pipeline stub (OCR→NER→sugestões→citação)
+  - `workers/memories/requirements.txt`:1 — deps mínimas
+
+Como testar o Ingestor (dev, mock)
+
+1) Subir a app: `npm run dev`
+2) Via UI: acesse `http://localhost:3000/memories`, selecione/arraste um arquivo e clique em “Iniciar processamento”.
+   - A página cria o upload e o job automaticamente e passa a acompanhar o status até “completed”.
+3) Alternativa via cURL:
+   - Upload: `curl -F "file=@/caminho/da/sua/imagem.jpg" http://localhost:3000/api/memories/upload`
+   - Job: `curl -X POST http://localhost:3000/api/memories/jobs -H 'Content-Type: application/json' -d '{"uploadId":"<id>"}'`
+   - Status: `curl http://localhost:3000/api/memories/jobs/<jobId>`
+4) Rodar o worker (em outro terminal):
+   - `cd workers/memories && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && python worker.py`
+
+Como plugar OCR/HTR e NER reais
+
+- Trocar `pipeline.py` por chamadas reais:
+  - OCR/HTR: TrOCR (impresso), Transkribus/Kraken (manuscrito) com modelos PT/IBÉRICO
+  - NER: spaCy/transformer + regras para datas e toponímia histórica
+- Normalização de lugares: resolver `PLACE` → `placeId` via Place Authority (adapter real)
+- Sugerir perfis: usar Search & Match com os campos extraídos (nome/data/lugar), reusar `src/services/ranking.ts`:1 para ranquear top‑3 e explicar por quê
+- Citação: gerar título/nota/URL e redirecionar para a página oficial de “Create & Attach Source” no FS
+
+Compatibilidade e limites
+
+- Read‑only para análise/anexação: sempre redirect para páginas oficiais
+- Não espelhar dados de coleções restritas; sem iframe
+- Respeitar throttling e política de linking da FamilySearch

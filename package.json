@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "worker:memories": "cd workers/memories && python3 worker.py"
   },
   "dependencies": {
     "next": "14.2.5",
@@ -24,4 +25,3 @@
     "typescript": "5.6.2"
   }
 }
-
