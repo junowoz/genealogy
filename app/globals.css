@@ -2,21 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme tokens using HSL for smooth transitions */
 :root {
-  --bg: 255 255 255;
-  --fg: 17 24 39;
+  --bg: 0 0% 100%;
+  --fg: 222.2 47.4% 11.2%;
+  --muted: 215 16.3% 46.9%;
+  --border: 214.3 31.8% 91.4%;
+  --accent: 222.2 84% 56%;
+}
+:root.dark {
+  --bg: 222.2 84% 5%;
+  --fg: 210 40% 98%;
+  --muted: 217.9 10.6% 64.9%;
+  --border: 217.2 32.6% 17.5%;
+  --accent: 222.2 84% 62%;
 }
 
-html, body {
-  height: 100%;
-}
-
+html, body { height: 100%; }
 body {
-  color: rgb(var(--fg));
-  background: rgb(var(--bg));
+  color: hsl(var(--fg));
+  background: hsl(var(--bg));
 }
 
-.chip {
-  @apply inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium;
+.chip { @apply inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium; }
+
+/* Better defaults */
+@layer base {
+  h1 { @apply text-3xl font-semibold tracking-tight; }
+  h2 { @apply text-xl font-semibold tracking-tight; }
+  h3 { @apply text-lg font-medium; }
+  a { @apply text-[hsl(var(--accent))]; }
 }
 

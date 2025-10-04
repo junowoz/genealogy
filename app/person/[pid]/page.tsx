@@ -1,6 +1,7 @@
 "use client";
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { Section, Badge } from '../../../src/ui/components';
 
 async function fetchHints(pid: string) {
   const res = await fetch(`/api/hints/${encodeURIComponent(pid)}`);
@@ -36,81 +37,77 @@ export default function PersonPage({ params }: { params: { pid: string } }) {
   return (
     <div className="space-y-8">
       <div>
-        <Link href="/" className="text-sm text-blue-700 underline underline-offset-2">← Voltar</Link>
+        <Link href="/" className="text-sm underline underline-offset-2">← Voltar</Link>
       </div>
-      <section className="rounded-lg border bg-white p-4 shadow-sm">
-        <h2 className="mb-2 text-lg font-medium">Resumo de hints</h2>
+
+      <Section title="Resumo de hints" description="Sempre analisados no FamilySearch (redirect oficial).">
         {hints ? (
-          <div className="flex items-center gap-4 text-sm">
-            <div>Total: <b>{hints.total}</b></div>
-            <div>Registros: <b>{hints.recordHints}</b></div>
-            <div>Árvore: <b>{hints.treeHints}</b></div>
-            <a className="text-blue-700 underline underline-offset-2" href={hints.fsHintsUrl} target="_blank" rel="noreferrer">Analisar no FamilySearch</a>
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <Badge tone="success">Total {hints.total}</Badge>
+            <Badge>Registros {hints.recordHints}</Badge>
+            <Badge>Árvore {hints.treeHints}</Badge>
+            <a className="text-sm underline underline-offset-2" href={hints.fsHintsUrl} target="_blank" rel="noreferrer">Analisar no FamilySearch</a>
           </div>
         ) : (
-          <div className="text-sm text-gray-600">Carregando…</div>
+          <div className="text-sm text-muted">Carregando…</div>
         )}
-      </section>
+      </Section>
 
-      <section className="rounded-lg border bg-white p-4 shadow-sm">
-        <h2 className="mb-2 text-lg font-medium">Conexões (ancestrais)</h2>
+      <Section title="Conexões (ancestrais)" description="Ancestrais diretos e parentes próximos do candidato.">
         {anc ? (
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
             {Object.values(anc.nodes).map((n: any) => (
-              <div key={n.person.id} className="rounded border p-2">
+              <div key={n.person.id} className="rounded-lg border border-border p-3">
                 <div className="font-medium">{n.person.name}</div>
-                <div className="text-xs text-gray-600">{n.person.lifespan || '—'}</div>
-                <a className="text-xs text-blue-700 underline" href={n.person.fsUrl} target="_blank" rel="noreferrer">Abrir no FS</a>
+                <div className="text-xs text-muted">{n.person.lifespan || '—'}</div>
+                <a className="text-xs underline" href={n.person.fsUrl} target="_blank" rel="noreferrer">Abrir no FS</a>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-sm text-gray-600">Carregando…</div>
+          <div className="text-sm text-muted">Carregando…</div>
         )}
-      </section>
+      </Section>
 
-      <section className="rounded-lg border bg-white p-4 shadow-sm">
-        <h2 className="mb-2 text-lg font-medium">Conexões (descendentes)</h2>
+      <Section title="Conexões (descendentes)" description="Descendentes diretos para explorar caminhos prováveis.">
         {desc ? (
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
             {Object.values(desc.nodes).map((n: any) => (
-              <div key={n.person.id} className="rounded border p-2">
+              <div key={n.person.id} className="rounded-lg border border-border p-3">
                 <div className="font-medium">{n.person.name}</div>
-                <div className="text-xs text-gray-600">{n.person.lifespan || '—'}</div>
-                <a className="text-xs text-blue-700 underline" href={n.person.fsUrl} target="_blank" rel="noreferrer">Abrir no FS</a>
+                <div className="text-xs text-muted">{n.person.lifespan || '—'}</div>
+                <a className="text-xs underline" href={n.person.fsUrl} target="_blank" rel="noreferrer">Abrir no FS</a>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-sm text-gray-600">Carregando…</div>
+          <div className="text-sm text-muted">Carregando…</div>
         )}
-      </section>
+      </Section>
 
-      <section className="rounded-lg border bg-white p-4 shadow-sm">
-        <h2 className="mb-2 text-lg font-medium">Mudanças recentes</h2>
+      <Section title="Mudanças recentes" description="Histórico legível com link para ver detalhes no FamilySearch.">
         {changes ? (
           <div className="divide-y text-sm">
             {changes.changes?.map((c: any) => (
               <div key={c.id} className="py-2">
                 <div className="flex items-center justify-between">
                   <div className="font-medium">{c.type}</div>
-                  <div className="text-xs text-gray-500">{new Date(c.at).toLocaleString()}</div>
+                  <div className="text-xs text-muted">{new Date(c.at).toLocaleString()}</div>
                 </div>
-                <div className="text-xs text-gray-600">por {c.by}</div>
+                <div className="text-xs text-muted">por {c.by}</div>
                 {c.field && (
                   <div className="mt-1 text-xs">
-                    <span className="text-gray-500">{c.field}:</span> {c.oldValue} → {c.newValue}
+                    <span className="text-muted">{c.field}:</span> {c.oldValue} → {c.newValue}
                   </div>
                 )}
-                <a className="text-xs text-blue-700 underline" href={c.fsChangeUrl} target="_blank" rel="noreferrer">Ver no FS</a>
+                <a className="text-xs underline" href={c.fsChangeUrl} target="_blank" rel="noreferrer">Ver no FS</a>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-sm text-gray-600">Carregando…</div>
+          <div className="text-sm text-muted">Carregando…</div>
         )}
-      </section>
+      </Section>
     </div>
   );
 }
-
