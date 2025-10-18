@@ -24,7 +24,7 @@ export const mcpServer = new McpServer(
   {
     name: "genealogy-mcp",
     version: "0.2.0",
-    description: "Genealogy · consultas read-only no FamilySearch",
+    description: "Genealogy · consultas no FamilySearch",
   },
   {
     capabilities: {

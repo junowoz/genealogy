@@ -1,4 +1,4 @@
-import PersonPageClient from './PersonPageClient';
+import PersonDetails from "./_components/PersonDetails";
 
 type PageProps = {
   params: Promise<{ pid: string }>;
@@ -6,5 +6,5 @@ type PageProps = {
 
 export default async function PersonPage({ params }: PageProps) {
   const { pid } = await params;
-  return <PersonPageClient pid={pid} />;
+  return <PersonDetails pid={pid} />;
 }

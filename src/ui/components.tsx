@@ -66,7 +66,7 @@ export function Hero() {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-sky-50 to-indigo-100 p-6 dark:from-indigo-950/30 dark:to-sky-950/20">
       <div className="relative z-10">
-        <h1>Pesquisa unificada & conexões (read‑only)</h1>
+        <h3>Pesquisa unificada & conexões</h3>
         <p className="mt-2 max-w-2xl text-sm text-muted">
           Encontre rapidamente a pessoa certa, com ranking explicável, normalização de lugares e um clique para abrir no FamilySearch.
         </p>

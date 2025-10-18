@@ -1,4 +1,4 @@
-import LinkedClient from "./LinkedClient";
+import LinkedSuccessPage from "../../_components/LinkedSuccessPage";
 
 type PageProps = {
   searchParams: Promise<{ state?: string }>;
@@ -6,5 +6,5 @@ type PageProps = {
 
 export default async function LinkedPage({ searchParams }: PageProps) {
   const { state } = await searchParams;
-  return <LinkedClient state={state ?? "web"} />;
+  return <LinkedSuccessPage state={state ?? "web"} />;
 }
