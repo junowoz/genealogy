@@ -1,6 +1,6 @@
 # 📖 DOCUMENTAÇÃO COMPLETA DO SISTEMA
 
-**Genealogy — FamilySearch Hub**
+**Genealogy | FamilySearch Hub**
 
 **URL do sistema:** https://genealogy.junowoz.com
 

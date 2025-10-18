@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 export const metadata = {
-  title: "Genealogy — Pesquisa Genealógica",
+  title: "Genealogy | Pesquisa Genealógica",
   description: "Painel unificado com FamilySearch.",
 };
 
