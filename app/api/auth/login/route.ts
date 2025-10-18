@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { env } from '../../../../src/lib/env';
 import { FS_AUTHORIZATION_URL } from '../../../../src/lib/familysearch/client';
@@ -13,7 +13,7 @@ const LoginQuerySchema = z.object({
   redirectTo: z.string().optional(),
 });
 
-export async function GET(req: NextRequest) {
+export async function GET(req: Request) {
   const url = new URL(req.url);
   const stateParam = url.searchParams.get('state') ?? undefined;
   const redirectToParam = url.searchParams.get('redirectTo') ?? undefined;

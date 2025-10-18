@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { FamilySearchHintsAdapter } from '../../../../src/adapters/familysearch/hintsAdapter';
 import { FamilySearchAuthError } from '../../../../src/lib/familysearch/client';
 
-export async function GET(_req: NextRequest, ctx: { params: { pid: string } }) {
-  const pid = ctx.params.pid;
+export async function GET(_req: Request, { params }: { params: { pid: string } }) {
+  const pid = params.pid;
   try {
     const adapter = new FamilySearchHintsAdapter();
     const data = await adapter.getHintSummary(pid);

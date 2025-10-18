@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { FamilySearchPlaceAdapter } from '../../../src/adapters/familysearch/placeAdapter';
 import { FamilySearchAuthError } from '../../../src/lib/familysearch/client';
 
-export async function GET(req: NextRequest) {
+export async function GET(req: Request) {
   const url = new URL(req.url);
   const q = (url.searchParams.get('q') || '').trim();
   if (!q) return NextResponse.json({ places: [] });

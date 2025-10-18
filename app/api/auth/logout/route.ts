@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { env } from '../../../../src/lib/env';
 import { getSession } from '../../../../src/lib/session';
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   const session = await getSession();
   await session.destroy();
 
@@ -22,6 +22,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(req: Request) {
   return POST(req);
 }

@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { env } from '../../../../src/lib/env';
 import { exchangeAuthorizationCode, fetchCurrentUser } from '../../../../src/lib/familysearch/client';
 import { getSession } from '../../../../src/lib/session';
 import { saveMcpAuth } from '../../../../src/mcp/store';
 
-export async function GET(req: NextRequest) {
+export async function GET(req: Request) {
   const url = new URL(req.url);
   const error = url.searchParams.get('error');
   const errorDescription = url.searchParams.get('error_description');

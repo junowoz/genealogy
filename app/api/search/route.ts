@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { FamilySearchSearchAdapter } from '../../../src/adapters/familysearch/searchAdapter';
 import { FamilySearchAuthError } from '../../../src/lib/familysearch/client';
@@ -11,7 +11,7 @@ const QuerySchema = z.object({
   placeText: z.string().optional(),
 });
 
-export async function GET(req: NextRequest) {
+export async function GET(req: Request) {
   const url = new URL(req.url);
   const q = Object.fromEntries(url.searchParams.entries());
   const parsed = QuerySchema.safeParse(q);
