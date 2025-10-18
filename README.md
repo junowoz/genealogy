@@ -2,22 +2,9 @@
 
 **Genealogy — FamilySearch Hub**
 
-Sistema completo que integra a API FamilySearch ao ChatGPT via MCP (Model Context Protocol) e oferece interface web com funcionalidades avançadas de busca genealógica e ranking inteligente.
-
----
-
-## 🎯 RESUMO EXECUTIVO
-
-**STATUS: ✅ 100% COMPLETO - PARIDADE TOTAL ALCANÇADA!**
-
-| Categoria              | Status       | Progresso    |
-| ---------------------- | ------------ | ------------ |
-| MCP Tools              | ✅ Completo  | 9/9 (100%)   |
-| Web API Routes         | ✅ Completo  | 15/15 (100%) |
-| Web Pages              | ✅ Completo  | 5/5 (100%)   |
-| **Paridade MCP ↔ Web** | ✅ **TOTAL** | **100%**     |
-
 **URL do sistema:** https://genealogy.junowoz.com
+
+Sistema completo que integra a API FamilySearch ao ChatGPT via MCP (Model Context Protocol) e oferece interface web com funcionalidades avançadas de busca genealógica e ranking inteligente.
 
 O projeto entrega um **conector MCP** para o **FamilySearch** integrado ao ChatGPT e um **site web** com diferenciais como **ranking inteligente**, **score de probabilidade** e **agrupamento visual**. O conjunto está **100% funcional**, com **9 ferramentas MCP** e **OAuth 2.0 com PKCE**.
 
