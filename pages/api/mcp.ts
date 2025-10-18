@@ -1,5 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from 'next/types';
-import { getTransport, createTransport, isInitialize } from '../../src/mcp/server';
+import type { NextApiRequest, NextApiResponse } from "next/types";
+import {
+  getTransport,
+  createTransport,
+  isInitialize,
+} from "../../src/mcp/server";
 
 export const config = {
   api: {
@@ -7,25 +11,33 @@ export const config = {
   },
 };
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   setCors(res);
 
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     res.status(204).end();
     return;
   }
 
-  const sessionId = (req.headers['mcp-session-id'] as string | undefined) ?? undefined;
+  const sessionId =
+    (req.headers["mcp-session-id"] as string | undefined) ?? undefined;
 
   try {
-    if (req.method === 'POST') {
+    if (req.method === "POST") {
       const rawBody = await readBody(req);
-      const body = rawBody.length ? safeJsonParse(rawBody.toString('utf8')) : undefined;
+      const body = rawBody.length
+        ? safeJsonParse(rawBody.toString("utf8"))
+        : undefined;
 
       let transport = getTransport(sessionId);
       if (!transport) {
         if (!isInitialize(body)) {
-          res.status(400).json({ error: 'Missing session. Inicie com initialize.' });
+          res
+            .status(400)
+            .json({ error: "Missing session. Inicie com initialize." });
           return;
         }
         transport = await createTransport();
@@ -35,48 +47,59 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
 
-    if (req.method === 'GET') {
+    if (req.method === "GET") {
       const transport = getTransport(sessionId);
       if (!transport) {
-        res.status(400).send('Sessão inválida ou ausente');
+        // Retorna status OK para probes/health checks do OpenAI
+        res.status(200).json({
+          status: "ready",
+          message:
+            "MCP server is ready. POST to /initialize to start a session.",
+          version: "1.0.0",
+        });
         return;
       }
       await transport.handleRequest(req as any, res as any);
       return;
     }
 
-    if (req.method === 'DELETE') {
+    if (req.method === "DELETE") {
       const transport = getTransport(sessionId);
       if (!transport) {
-        res.status(400).send('Sessão inválida ou ausente');
+        res.status(400).send("Sessão inválida ou ausente");
         return;
       }
       await transport.handleRequest(req as any, res as any);
       return;
     }
 
-    res.setHeader('Allow', 'GET,POST,DELETE,OPTIONS');
-    res.status(405).send('Método não permitido');
+    res.setHeader("Allow", "GET,POST,DELETE,OPTIONS");
+    res.status(405).send("Método não permitido");
   } catch (err) {
-    console.error('[mcp] erro', err);
+    console.error("[mcp] erro", err);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'Erro interno', message: (err as Error).message });
+      res
+        .status(500)
+        .json({ error: "Erro interno", message: (err as Error).message });
     }
   }
 }
 
 function setCors(res: NextApiResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, MCP-Session-Id');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, MCP-Session-Id");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
 }
 
 function readBody(req: NextApiRequest) {
   return new Promise<Buffer>((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on('data', (chunk: Buffer | string) => chunks.push(Buffer.from(chunk)));
-    req.on('end', () => resolve(Buffer.concat(chunks)));
-    req.on('error', (err: Error) => reject(err));
+    req.on("data", (chunk: Buffer | string) => {
+      const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
+      chunks.push(buffer);
+    });
+    req.on("end", () => resolve(Buffer.concat(chunks as any)));
+    req.on("error", (err: Error) => reject(err));
   });
 }
 
