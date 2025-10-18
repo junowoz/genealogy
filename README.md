@@ -34,7 +34,7 @@ O app inteiro roda em modo Node (nenhum Edge runtime) para permitir streaming/SS
 
 ```ini
 FS_ENV=beta
-FS_APP_KEY=b007B
+FS_APP_KEY=exemplo-de-api-key
 FS_REDIRECT_URI=https://genealogy.junowoz.com/api/auth/callback
 FS_OAUTH_SCOPE=openid profile https://api.familysearch.org/auth/familytree.read
 NEXT_PUBLIC_APP_ORIGIN=https://genealogy.junowoz.com
