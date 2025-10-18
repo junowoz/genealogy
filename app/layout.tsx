@@ -46,7 +46,15 @@ export default function RootLayout({
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Abrir FamilySearch
+                  FamilySearch
+                </a>
+                <a
+                  className="underline decoration-dotted underline-offset-4"
+                  href="https://github.com/junowoz/genealogy"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  GitHub Project
                 </a>
                 <ThemeToggle />
               </div>
