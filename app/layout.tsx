@@ -8,7 +8,7 @@ import Image from "next/image";
 
 export const metadata = {
   title: "Genealogy — Pesquisa Genealógica",
-  description: "Painel unificado com FamilySearch (read-only).",
+  description: "Painel unificado com FamilySearch.",
 };
 
 export default function RootLayout({

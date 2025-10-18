@@ -138,7 +138,7 @@ export default function Page() {
           <div className="md:col-span-2">
             <Label>Nome</Label>
             <Input
-              placeholder="Ex.: Inácio de Souza Gouvêa"
+              placeholder="Ex.: John Doe"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
@@ -213,10 +213,6 @@ export default function Page() {
             <Button type="submit">Buscar</Button>
           </div>
         </form>
-
-        <div className="mt-3 text-xs text-muted">
-          Dica: experimente "Inácio de Souza Gouvêa" com local São Paulo.
-        </div>
       </Section>
 
       <Section

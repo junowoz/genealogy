@@ -24,7 +24,7 @@ def ocr_stub(file_path: str) -> Dict[str, Any]:
         "pages": [
             {
                 "page": 1,
-                "text": "Registro: Inácio de Souza Gouvêa, 1861, São Paulo, Brazil",
+                "text": "Registro: John Doe, 1861, São Paulo, Brazil",
             }
         ],
         "lang": "pt",
@@ -39,10 +39,10 @@ def ner_stub(ocr: Dict[str, Any]) -> Dict[str, Any]:
         ents.append({
             "id": gen_id(),
             "type": "PERSON_NAME",
-            "text": "Inácio de Souza Gouvêa",
+            "text": "John Doe",
             "confidence": 0.92,
             "page": 1,
-            "span": {"start": page_text.find("Inácio"), "end": page_text.find("Inácio") + len("Inácio de Souza Gouvêa")},
+            "span": {"start": page_text.find("Inácio"), "end": page_text.find("Inácio") + len("John Doe")},
         })
     if "1861" in page_text:
         ents.append({
@@ -71,7 +71,7 @@ def suggest_stub(ner: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "suggestions": [
             {
-                "name": "Inácio de Souza Gouvêa",
+                "name": "John Doe",
                 "score": 0.86,
                 "explanations": ["Nome ✓", "Data ✓ (1861)", "Lugar ✓ (São Paulo)"] ,
                 "fsUrl": "https://www.familysearch.org/tree/person/details/K-123",
@@ -84,7 +84,7 @@ def suggest_stub(ner: Dict[str, Any]) -> Dict[str, Any]:
 def citation_stub(file_path: str) -> Dict[str, Any]:
     return {
         "citation": {
-            "title": "Registro — Inácio de Souza Gouvêa (1861)",
+            "title": "Registro — John Doe (1861)",
             "note": "Gerado automaticamente a partir de imagem enviada.",
             "url": None,
         }
