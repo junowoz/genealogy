@@ -4,6 +4,7 @@ import { Container } from "../src/ui/components";
 import { ThemeToggle } from "../src/ui/components";
 import { AuthStatus } from "./_components/AuthStatus";
 import Link from "next/link";
+import Image from "next/image";
 
 export const metadata = {
   title: "Genealogy — Pesquisa Genealógica",
@@ -22,10 +23,23 @@ export default function RootLayout({
           <Container>
             <header className="mb-6 flex items-center justify-between gap-4">
               <Link href="/" className="hover:opacity-80">
-                <div className="text-xl font-semibold tracking-tight">
-                  Genealogy
+                <div className="flex items-center gap-3">
+                  <Image
+                    src="/images/widget-genealogy-icon.png"
+                    alt="Genealogy logo"
+                    className="h-12 w-auto select-none"
+                    style={{ display: "block" }}
+                    loading="eager"
+                    width={1080}
+                    height={1080}
+                  />
+                  <div>
+                    <div className="text-xl font-semibold tracking-tight">
+                      Genealogy
+                    </div>
+                    <div className="text-xs text-muted">FamilySearch beta</div>
+                  </div>
                 </div>
-                <div className="text-xs text-muted">FamilySearch beta</div>
               </Link>
               <div className="flex items-center gap-4 text-sm">
                 <Link
