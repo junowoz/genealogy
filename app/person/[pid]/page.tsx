@@ -1,5 +1,10 @@
 import PersonPageClient from './PersonPageClient';
 
-export default function PersonPage({ params }: { params: { pid: string } }) {
-  return <PersonPageClient pid={params.pid} />;
+type PageProps = {
+  params: Promise<{ pid: string }>;
+};
+
+export default async function PersonPage({ params }: PageProps) {
+  const { pid } = await params;
+  return <PersonPageClient pid={pid} />;
 }
