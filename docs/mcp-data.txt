@@ -1,0 +1,7 @@
+Genealogy Helper
+
+Search family history records, explore pedigree charts, and discover hints from FamilySearch. Read-only genealogy research assistant.
+
+https://genealogy.junowoz.com/api/mcp
+
+No auth

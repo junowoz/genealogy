@@ -18,19 +18,49 @@
   --accent: 222.2 84% 62%;
 }
 
-html, body { height: 100%; }
+html,
+body {
+  height: 100%;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
 body {
   color: hsl(var(--fg));
   background: hsl(var(--bg));
 }
 
-.chip { @apply inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium; }
+.chip {
+  @apply inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium;
+}
 
 /* Better defaults */
 @layer base {
-  h1 { @apply text-3xl font-semibold tracking-tight; }
-  h2 { @apply text-xl font-semibold tracking-tight; }
-  h3 { @apply text-lg font-medium; }
-  a { @apply text-[hsl(var(--accent))]; }
-}
+  h1 {
+    @apply text-2xl sm:text-3xl font-semibold tracking-tight;
+  }
+  h2 {
+    @apply text-lg sm:text-xl font-semibold tracking-tight;
+  }
+  h3 {
+    @apply text-base sm:text-lg font-medium;
+  }
+  a {
+    @apply text-[hsl(var(--accent))];
+  }
 
+  /* Mobile improvements */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Better text rendering on small screens */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

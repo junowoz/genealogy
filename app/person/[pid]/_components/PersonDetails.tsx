@@ -228,14 +228,16 @@ export default function PersonDetails({ pid }: { pid: string }) {
                 <h4 className="text-sm font-semibold mb-2">
                   Pais ({relatives.parents.length})
                 </h4>
-                <div className="grid gap-2 md:grid-cols-2">
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {relatives.parents.map((parent: any) => (
                     <Link
                       key={parent.id}
                       href={`/person/${parent.id}`}
                       className="block p-3 rounded-lg border border-border hover:border-foreground transition-colors"
                     >
-                      <div className="font-medium">{extractName(parent)}</div>
+                      <div className="font-medium break-words">
+                        {extractName(parent)}
+                      </div>
                       <div className="text-xs text-muted">
                         {extractLifespan(parent)}
                       </div>
@@ -250,14 +252,16 @@ export default function PersonDetails({ pid }: { pid: string }) {
                 <h4 className="text-sm font-semibold mb-2">
                   Cônjuges ({relatives.spouses.length})
                 </h4>
-                <div className="grid gap-2 md:grid-cols-2">
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {relatives.spouses.map((spouse: any) => (
                     <Link
                       key={spouse.id}
                       href={`/person/${spouse.id}`}
                       className="block p-3 rounded-lg border border-border hover:border-foreground transition-colors"
                     >
-                      <div className="font-medium">{extractName(spouse)}</div>
+                      <div className="font-medium break-words">
+                        {extractName(spouse)}
+                      </div>
                       <div className="text-xs text-muted">
                         {extractLifespan(spouse)}
                       </div>
@@ -272,14 +276,14 @@ export default function PersonDetails({ pid }: { pid: string }) {
                 <h4 className="text-sm font-semibold mb-2">
                   Filhos ({relatives.children.length})
                 </h4>
-                <div className="grid gap-2 md:grid-cols-3">
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {relatives.children.map((child: any) => (
                     <Link
                       key={child.id}
                       href={`/person/${child.id}`}
                       className="block p-3 rounded-lg border border-border hover:border-foreground transition-colors"
                     >
-                      <div className="font-medium text-sm">
+                      <div className="font-medium text-sm break-words">
                         {extractName(child)}
                       </div>
                       <div className="text-xs text-muted">
@@ -332,18 +336,20 @@ export default function PersonDetails({ pid }: { pid: string }) {
         description="Ancestrais diretos e parentes próximos do candidato."
       >
         {anc ? (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Object.values(anc.nodes).map((n: any) => (
               <div
                 key={n.person.id}
                 className="rounded-lg border border-border p-3"
               >
-                <div className="font-medium">{n.person.name}</div>
+                <div className="font-medium text-sm break-words">
+                  {n.person.name}
+                </div>
                 <div className="text-xs text-muted">
                   {n.person.lifespan || "—"}
                 </div>
                 <a
-                  className="text-xs underline"
+                  className="text-xs underline break-all"
                   href={n.person.fsUrl}
                   target="_blank"
                   rel="noreferrer"
@@ -363,18 +369,20 @@ export default function PersonDetails({ pid }: { pid: string }) {
         description="Descendentes diretos para explorar caminhos prováveis."
       >
         {desc ? (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Object.values(desc.nodes).map((n: any) => (
               <div
                 key={n.person.id}
                 className="rounded-lg border border-border p-3"
               >
-                <div className="font-medium">{n.person.name}</div>
+                <div className="font-medium text-sm break-words">
+                  {n.person.name}
+                </div>
                 <div className="text-xs text-muted">
                   {n.person.lifespan || "—"}
                 </div>
                 <a
-                  className="text-xs underline"
+                  className="text-xs underline break-all"
                   href={n.person.fsUrl}
                   target="_blank"
                   rel="noreferrer"
@@ -397,21 +405,21 @@ export default function PersonDetails({ pid }: { pid: string }) {
           <div className="divide-y text-sm">
             {changes.changes?.map((c: any) => (
               <div key={c.id} className="py-2">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium">{c.type}</div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
+                  <div className="font-medium text-sm">{c.type}</div>
                   <div className="text-xs text-muted">
                     {new Date(c.at).toLocaleString()}
                   </div>
                 </div>
                 <div className="text-xs text-muted">por {c.by}</div>
                 {c.field && (
-                  <div className="mt-1 text-xs">
+                  <div className="mt-1 text-xs break-words">
                     <span className="text-muted">{c.field}:</span> {c.oldValue}{" "}
                     → {c.newValue}
                   </div>
                 )}
                 <a
-                  className="text-xs underline"
+                  className="text-xs underline break-all"
                   href={c.fsChangeUrl}
                   target="_blank"
                   rel="noreferrer"

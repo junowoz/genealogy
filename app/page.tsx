@@ -114,7 +114,7 @@ export default function Page() {
         description="Nome + janela de datas + local normalizado (Place Authority)."
       >
         <form
-          className="grid grid-cols-1 gap-3 md:grid-cols-6"
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6"
           onSubmit={(e) => {
             e.preventDefault();
 
@@ -135,7 +135,7 @@ export default function Page() {
             setSubmitted(params);
           }}
         >
-          <div className="md:col-span-2">
+          <div className="sm:col-span-2 lg:col-span-2">
             <Label>Nome</Label>
             <Input
               placeholder="Ex.: John Doe"
@@ -143,7 +143,7 @@ export default function Page() {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
           </div>
-          <div>
+          <div className="lg:col-span-1">
             <Label>Ano nasc. de</Label>
             <Input
               inputMode="numeric"
@@ -154,7 +154,7 @@ export default function Page() {
               }
             />
           </div>
-          <div>
+          <div className="lg:col-span-1">
             <Label>Ano nasc. até</Label>
             <Input
               inputMode="numeric"
@@ -165,7 +165,7 @@ export default function Page() {
               }
             />
           </div>
-          <div className="md:col-span-2 relative">
+          <div className="sm:col-span-2 lg:col-span-2 relative">
             <Label>Local</Label>
             <Input
               placeholder="Cidade, estado, país"
@@ -180,7 +180,7 @@ export default function Page() {
               onBlur={() => setTimeout(() => setPlaceOpen(false), 150)}
             />
             {placeOpen && placeData?.places?.length ? (
-              <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-white shadow">
+              <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-white shadow-lg">
                 {placeData.places.map((p) => (
                   <button
                     key={p.id}
@@ -209,8 +209,10 @@ export default function Page() {
               </div>
             ) : null}
           </div>
-          <div className="md:col-span-6">
-            <Button type="submit">Buscar</Button>
+          <div className="sm:col-span-2 lg:col-span-6">
+            <Button type="submit" className="w-full sm:w-auto">
+              Buscar
+            </Button>
           </div>
         </form>
       </Section>
@@ -224,7 +226,7 @@ export default function Page() {
             {isFetching ? "Buscando…" : "Pronto"}
           </div>
           {submitted ? (
-            <div className="text-xs text-muted">
+            <div className="text-xs text-muted break-words">
               Consulta: {submitted.name}
               {submitted.placeText
                 ? ` • ${submitted.placeText}`
@@ -241,11 +243,11 @@ export default function Page() {
         {searchError ? (
           <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-300">
             {(searchError as Error).message === "AUTH_REQUIRED" ? (
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <span>Você precisa fazer login para buscar.</span>
                 <button
                   onClick={() => redirectToLogin()}
-                  className="ml-2 rounded bg-rose-600 px-3 py-1 text-xs font-medium text-white hover:bg-rose-700"
+                  className="rounded bg-rose-600 px-3 py-1 text-xs font-medium text-white hover:bg-rose-700 whitespace-nowrap"
                 >
                   Fazer Login
                 </button>
@@ -313,25 +315,25 @@ export default function Page() {
                     {items.map((c) => (
                       <div
                         key={c.person.id}
-                        className="rounded-xl border border-border bg-white p-4 shadow-card dark:bg-black/30"
+                        className="rounded-xl border border-border bg-white p-3 sm:p-4 shadow-card dark:bg-black/30"
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <div className="text-lg font-medium">
+                        <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-base sm:text-lg font-medium">
                               {c.person.name}{" "}
                               <span className="text-muted text-sm">
                                 ({c.person.lifespan || "—"})
                               </span>
                             </div>
-                            <div className="mt-1 text-sm text-muted">
+                            <div className="mt-1 text-sm text-muted break-words">
                               {c.person.gender ? `${c.person.gender} • ` : ""}
                               {c.person.primaryPlace?.displayName ||
                                 c.person.primaryPlaceText ||
                                 "Local desconhecido"}
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="text-2xl font-semibold tabular-nums">
+                          <div className="text-center sm:text-right flex-shrink-0">
+                            <div className="text-xl sm:text-2xl font-semibold tabular-nums">
                               {c.score.toFixed(2)}
                             </div>
                             <div className="text-xs text-muted">score</div>
@@ -342,9 +344,9 @@ export default function Page() {
                             <Badge key={idx}>{e}</Badge>
                           ))}
                         </div>
-                        <div className="mt-3 flex items-center gap-3">
+                        <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                           <a
-                            className="text-sm underline underline-offset-2"
+                            className="text-sm underline underline-offset-2 whitespace-nowrap"
                             href={c.person.fsUrl}
                             target="_blank"
                             rel="noreferrer"
@@ -352,7 +354,7 @@ export default function Page() {
                             Abrir no FamilySearch
                           </a>
                           <a
-                            className="text-sm text-muted underline underline-offset-2 hover:text-[hsl(var(--fg))]"
+                            className="text-sm text-muted underline underline-offset-2 hover:text-[hsl(var(--fg))] whitespace-nowrap"
                             href={`./person/${encodeURIComponent(c.person.id)}`}
                           >
                             Ver conexões e hints
