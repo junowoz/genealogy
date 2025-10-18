@@ -390,6 +390,231 @@ registerToolUnsafe(
   }
 );
 
+// ==================== PERSON DETAILS ====================
+
+const personDetailsInputSchema = {
+  pid: z.string().min(1).describe("Person ID (PID)"),
+};
+
+const personDetailsOutputSchema = {
+  person: z.any(),
+  relationships: z.any().optional(),
+};
+
+registerToolUnsafe(
+  "fs.person_details",
+  {
+    title: "Detalhes de pessoa",
+    description:
+      "Retorna informações completas de uma pessoa (nomes, datas, fatos).",
+    inputSchema: personDetailsInputSchema,
+    outputSchema: personDetailsOutputSchema,
+    annotations: { readOnlyHint: true },
+  },
+  async (args: any, extra: any) => {
+    const { sessionId } = extra;
+    try {
+      const { client } = await resolveClientForSession(sessionId);
+      const data = await client.get<any>(`/platform/tree/persons/${args.pid}`);
+
+      const person = data?.persons?.[0];
+      if (!person) {
+        throw new Error(`Pessoa ${args.pid} não encontrada.`);
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Pessoa ${args.pid} carregada com sucesso.`,
+          },
+        ],
+        structuredContent: {
+          person,
+          relationships: data?.relationships,
+        },
+      };
+    } catch (err) {
+      return handleToolError(err, sessionId);
+    }
+  }
+);
+
+// ==================== PERSON RELATIVES ====================
+
+const personRelativesInputSchema = {
+  pid: z.string().min(1).describe("Person ID (PID)"),
+};
+
+const personRelativesOutputSchema = {
+  parents: z.array(z.any()),
+  spouses: z.array(z.any()),
+  children: z.array(z.any()),
+};
+
+registerToolUnsafe(
+  "fs.person_relatives",
+  {
+    title: "Parentes de pessoa",
+    description: "Lista pais, cônjuges e filhos de uma pessoa.",
+    inputSchema: personRelativesInputSchema,
+    outputSchema: personRelativesOutputSchema,
+    annotations: { readOnlyHint: true },
+  },
+  async (args: any, extra: any) => {
+    const { sessionId } = extra;
+    try {
+      const { client } = await resolveClientForSession(sessionId);
+      const data = await client.get<any>(
+        `/platform/tree/persons/${args.pid}?relatives=true`
+      );
+
+      const relationships = data?.relationships ?? [];
+      const persons = data?.persons ?? [];
+      const personsMap = new Map(persons.map((p: any) => [p.id, p]));
+
+      const parents: any[] = [];
+      const spouses: any[] = [];
+      const children: any[] = [];
+
+      for (const rel of relationships) {
+        const type = rel?.type;
+
+        // Child-and-Parents relationship
+        if (type?.includes("ChildAndParentsRelationship")) {
+          const childId = rel.child?.resourceId;
+          const parent1Id = rel.parent1?.resourceId;
+          const parent2Id = rel.parent2?.resourceId;
+
+          if (childId === args.pid) {
+            // This person is the child, add parents
+            if (parent1Id) parents.push(personsMap.get(parent1Id));
+            if (parent2Id) parents.push(personsMap.get(parent2Id));
+          } else {
+            // This person is a parent, add child
+            if (childId) children.push(personsMap.get(childId));
+          }
+        }
+
+        // Couple relationship
+        if (type?.includes("Couple")) {
+          const person1Id = rel.person1?.resourceId;
+          const person2Id = rel.person2?.resourceId;
+
+          if (person1Id === args.pid && person2Id) {
+            spouses.push(personsMap.get(person2Id));
+          } else if (person2Id === args.pid && person1Id) {
+            spouses.push(personsMap.get(person1Id));
+          }
+        }
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Pessoa ${args.pid}: ${parents.length} pai(s), ${spouses.length} cônjuge(s), ${children.length} filho(s).`,
+          },
+        ],
+        structuredContent: {
+          parents: parents.filter(Boolean),
+          spouses: spouses.filter(Boolean),
+          children: children.filter(Boolean),
+        },
+      };
+    } catch (err) {
+      return handleToolError(err, sessionId);
+    }
+  }
+);
+
+// ==================== CURRENT USER ====================
+
+const currentUserOutputSchema = {
+  userId: z.string(),
+  displayName: z.string().optional(),
+  personId: z.string().optional(),
+  email: z.string().optional(),
+};
+
+registerToolUnsafe(
+  "fs.current_user",
+  {
+    title: "Usuário atual",
+    description:
+      "Retorna informações do usuário logado (Person ID, nome, email).",
+    inputSchema: {},
+    outputSchema: currentUserOutputSchema,
+    annotations: { readOnlyHint: true },
+  },
+  async (_args: any, extra: any) => {
+    const { sessionId } = extra;
+    try {
+      const { auth, client } = await resolveClientForSession(sessionId);
+
+      // Try to get from auth first
+      if (auth.personId && auth.displayName) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Usuário logado: ${auth.displayName} (${auth.personId})`,
+            },
+          ],
+          structuredContent: {
+            userId: auth.personId,
+            displayName: auth.displayName,
+            personId: auth.personId,
+          },
+        };
+      }
+
+      // Fetch from API if not in auth
+      const res = await fetch(
+        `${env.FS_API_BASE_URL.replace(
+          /\/+$/,
+          ""
+        )}/platform/tree/current-person`,
+        {
+          headers: {
+            Authorization: `Bearer ${auth.accessToken}`,
+            Accept: "application/x-gedcomx-v1+json",
+          },
+          redirect: "manual",
+        }
+      );
+
+      if (res.status === 303) {
+        const location = res.headers.get("Location");
+        if (location) {
+          const personId = location.split("/").filter(Boolean).pop();
+          if (personId) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `Seu Person ID: ${personId}`,
+                },
+              ],
+              structuredContent: {
+                userId: personId,
+                personId,
+                displayName: auth.displayName,
+              },
+            };
+          }
+        }
+      }
+
+      throw new Error(
+        "Não foi possível determinar o Person ID do usuário atual."
+      );
+    } catch (err) {
+      return handleToolError(err, sessionId);
+    }
+  }
+);
+
 export async function createTransport() {
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),

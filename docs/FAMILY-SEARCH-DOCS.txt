@@ -1,0 +1,2429 @@
+The Family Tree Data Model
+June 29, 2023
+
+The purpose of this document is to help programmers become familiar with the data model of the FamilySearch Family Tree. The FamilySearch data model conforms to the GEDCOM X spec as much as possible. For more information, see the GEDCOM X guide.
+
+The following graphic shows how data objects used in the FamilySearch Family Tree are associated. As the model illustrates, the core of the Family Tree data model are the individual persons that, linked together by relationships, create the Tree. The purpose of the other data objects is to give support and detailed information about the person, relationships and the research recorded in the Family Tree.
+
+
+Persons
+Each person in the Family Tree has details that identify the person, the research done on the person, the family relationships of the person, contributors to facts about the person, and memories of the person.
+
+The model as applied to a Family Tree person provides the following data associations:
+
+Links to other resources of information relevant to the person.
+
+Vital statistics about the person.
+
+Other facts about the person.
+
+Fact details for each type of fact. See the Facts documentation.
+Relationships of couples and parents-to-children
+
+Source References
+
+SourceDescriptions
+
+Contributors
+
+PlaceDescriptions
+
+Discussions
+
+Memories
+
+Changes
+
+Notes
+
+
+Relationships
+Family relationships in the Family Tree consist of two types of relationships: a couple relationship and a child-and-parents relationship. FamilySearch has a Child-and-Parents Relationship resource and a Couple Relationship resource to establish and maintain relationships. A couple relationship is between two people and can be read, updated, or deleted using the Couple Relationship resource. A child-and-parents relationship is between a child and two parents and can be read, updated or deleted using the Child-and-Parents Relationship resource. There are no other relationship types in FamilySearch.
+
+The child-and-parents relationship is a description of the relationship between a child and two parents. This relationship governs the relationship between a child and the child's parents, that is, parent 1 or parent 2 or both parents, with the possibility that one of the parents is not specified. The child-and-parents relationship may contain facts describing the lineage type between the child and each parent. Examples of lineage types include biological, adopted, guardianship, step, etc.
+
+Relationships consist of source references and descriptions, place descriptions, discussions, memories, changes, and notes. The family relationships data objects for a person in the Family Tree include the following:
+
+A couple relationship object of each person.
+A child-and-parent relationship object for each person.
+Notes and changes objects.
+For more detail on family relationships in Family Tree, see the Pedigree guide.
+
+
+Discussions
+A discussion object has references to user-contributed comment objects. Discussion objects are identified in a discussion reference object which is associated with a person. (You can create a person object in the Family Tree by using the POST function of the Persons resource. For details, see the Create Person example of the Persons resource.) A person can have many discussion references and a discussion reference can have more than one comment. For more information on performing discussion operations, see the Discussions resource.
+
+
+Memories
+A memory is a container for user-contributed artifacts, such as photos, stories, documents and audios. Memory persona objects are created to identify people who are part of a memory. Personas are then identified in a memory reference object which is associated with a person. Memories can also have comment objects attached to them.
+
+For more details on memories and how to create and associate them with a person, see the Memories guide.
+
+
+Sources
+Sources are information that supports conclusions about a person or relationship in the Family Tree. Sources are stored in collections, and users each have a source box that can be used to help organize and manage research they do. For more information on sources and source boxes, see the Sources guide.
+
+A source reference object is created to associate sources with a person or relationship in the Family Tree.
+
+
+Documentation > Resources > Current Tree Person
+Path
+Description
+Operations
+GET
+Example Requests
+Current Tree Person
+Path
+/platform/tree/current-person
+Production:	https://api.familysearch.org/platform/tree/current-person
+Beta:	https://apibeta.familysearch.org/platform/tree/current-person
+Integration (Integration):	https://api-integ.familysearch.org/platform/tree/current-person
+Description
+The Current Tree Person query is used to retrieve the Tree person that represents the current user.
+
+Operations
+GET - Read the tree person that represents the current user.
+
+Produces - Specify a returned data format using the Accept header.
+application/json
+application/x-fs-v1+json
+application/x-fs-v1+xml
+application/x-gedcomx-v1+json
+application/x-gedcomx-v1+xml
+application/xml
+text/html
+This method does not accept any parameters.
+
+Status Codes
+303  -  The request was successful. The location of the tree person that represents the current user is provided in the Location header.
+429  -  If the request was throttled.
+Example Requests
+Read Current Tree Person	How to query for the Tree person that represents the current user.
+Read Current Tree Person Expecting 200 Response	How to query for the Tree person that represents the current user and specify that you expect a 200 OK response code instead of a 303 See Other response code.
+
+
+Documentation > Resources > Ancestry
+Path
+Description
+Operations
+GET
+Example Requests
+Related Links
+Ancestry
+Path
+/platform/tree/ancestry
+Production:	https://api.familysearch.org/platform/tree/ancestry
+Beta:	https://apibeta.familysearch.org/platform/tree/ancestry
+Integration (Integration):	https://api-integ.familysearch.org/platform/tree/ancestry
+Description
+The Ancestry query is used to query the application for an ascending pedigree rooted at a person and for a specific number of generations. The result of the query is a list of persons. Each person comes with an ascendancy number in the display properties for the person. The ascendancy number is interpreted as an ahnen number that determines the position of each person in the pedigree.
+
+Note:
+
+The person parameter is the ID for the person at the root of the pedigree. The person parameter is required. The ancestor number of the person identified by the person parameter will be 1, unless the spouse parameter is provided.
+The presence of the spouse parameter indicates that the pedigree of both the person and the person's spouse is requested. When the spouse parameter is supplied, the ascendancy number of the person and the spouse is either 2 or 3, depending on the role of the person.
+If the value of the spouse parameter is empty, the application may select a spouse for the person.
+Otherwise, the value of the spouse parameter is interpreted as the ID of the spouse selected for the pedigree.
+Operations
+GET - Read a person and the person's ancestors for the specified number of generations.
+
+Produces - Specify a returned data format using the Accept header.
+application/json
+application/x-fs-v1+json
+application/x-fs-v1+xml
+application/x-gedcomx-v1+json
+application/x-gedcomx-v1+xml
+application/xml
+text/html
+Parameters
+Name	Type	Description
+descendants	query	When the query parameter is supplied then additional details will be returned for each descendant in the ancestry.
+generations	query	The number of generations being queried. Default=3. Min=1. Max=8.
+marriageDetails	query	When the query parameter is supplied then marriage details will be returned for each person in the ancestry.
+person	query	The ID of the person whose ancestry is being queried. Required.
+personDetails	query	When the query parameter is supplied then additional person details will be returned for each person in the ancestry.
+spouse	query	If provided, the ancestry of the spouse will be included. An empty value indicates the system will choose a spouse. A value of "UNKNOWN" indicates the system will select the "unknown spouse" for purposes of drawing the pedigree.
+Status Codes
+200  -  The query was successful.
+301  -  If the requested person has been merged to another person.
+410  -  If the requested person has been deleted.
+429  -  If the request was throttled.
+Example Requests
+Read Person Ancestry	How to read the ancestry graph for a person.
+Read Person Ancestry and additional person details	How to read the ancestry for a person and return additional person details.
+Read Person Ancestry with Specified Spouse	How to read the ancestry graph for a person with a specified spouse.
+Read Person Ancestry with Specified Spouse and additional person and marriage details	How to read the ancestry graph for a person with a specified spouse and return additional person details and marriage details.
+Related Links
+
+
+
+Documentation > Resources > Person
+Path
+Description
+Operations
+HEAD
+GET
+POST
+DELETE
+Example Requests
+Related Links
+Person
+Path
+/platform/tree/persons/{pid}
+Production:	https://api.familysearch.org/platform/tree/persons/{pid}
+Beta:	https://apibeta.familysearch.org/platform/tree/persons/{pid}
+Integration (Integration):	https://api-integ.familysearch.org/platform/tree/persons/{pid}
+Description
+The Person resource provides the interface to read, update, and delete a person, including the names, gender, and facts of the person.
+
+Operations
+HEAD - Read the headers for a person.
+
+Produces - Specify a returned data format using the Accept header.
+application/json
+application/x-fs-v1+json
+application/x-fs-v1+xml
+application/x-gedcomx-v1+json
+application/x-gedcomx-v1+xml
+application/xml
+text/html
+Parameters
+Name	Type	Description
+pid	path	The id of the person to retrieve.
+failOnError	query	True if call is to fail on sources read error; false otherwise (will return person without failed sources). Default=false.
+relatives	query	'true' if related persons (all parents, all children, and all spouses, but not siblings) should be included in the response; 'false' otherwise.
+sourceDescriptions	query	True if the call will attempt to include source descriptions; false otherwise.
+Status Codes
+200  -  Upon a successful read.
+301  -  If the requested person has been merged to another person.
+404  -  If the requested person is not found.
+410  -  If the requested person has been deleted.
+429  -  If the request was throttled.
+GET - Read a person.
+
+Produces - Specify a returned data format using the Accept header.
+application/json
+application/x-fs-v1+json
+application/x-fs-v1+xml
+application/x-gedcomx-v1+json
+application/x-gedcomx-v1+xml
+application/xml
+text/html
+Parameters
+Name	Type	Description
+pid	path	The id of the person to retrieve.
+failOnError	query	True if call is to fail on sources read error; false otherwise (will return person without failed sources). Default=false.
+relatives	query	True if related persons (all parents, all children, all spouses, and all siblings) should be included in the response; false otherwise.
+sourceDescriptions	query	True if the call will attempt to include source descriptions; false otherwise.
+Status Codes
+200  -  Upon a successful read.
+301  -  If the requested person has been merged into another person.
+404  -  If the requested person is not found.
+410  -  If the requested person has been deleted.
+429  -  If the request was throttled.
+POST - Update a person.
+
+Produces - Specify a returned data format using the Accept header.
+application/json
+application/x-fs-v1+json
+application/x-fs-v1+xml
+application/x-gedcomx-v1+json
+application/x-gedcomx-v1+xml
+application/xml
+text/html
+Consumes - Specify the incoming data format using the Content-Type header.
+application/x-fs-v1+json
+application/x-fs-v1+xml
+application/x-gedcomx-v1+json
+application/x-gedcomx-v1+xml
+Parameters
+Name	Type	Description
+X-Reason	header	The reason for the person update.
+pid	path	The id of the person to update.
+body	request-body	The person to be updated.
+Status Codes
+200  -  The return.conclusion.ids Pending Modification is enabled. Expect conclusion ids to be returned in the response body.
+201  -  The update created a single conclusion. The new conclusion URL is in the 'Location' header.
+204  -  The update was successful.
+404  -  If the requested person is not found.
+410  -  If the requested person has been deleted or merged.
+429  -  If the request was throttled.
+DELETE - Delete a person.
+
+Produces - Specify a returned data format using the Accept header.
+application/json
+application/x-fs-v1+json
+application/x-fs-v1+xml
+application/x-gedcomx-v1+json
+application/x-gedcomx-v1+xml
+application/xml
+text/html
+Parameters
+Name	Type	Description
+X-Reason	header	The reason the person is to be deleted.
+pid	path	The id of the person to delete.
+Status Codes
+204  -  The delete was successful.
+403  -  If you're trying to delete a person that other users have contributed to.
+404  -  If the requested person is not found.
+409  -  If an attempt was made to delete the person while another request committed a change to the person.
+410  -  If the requested person has already been merged or deleted.
+429  -  If the request was throttled.
+Example Requests
+Create Discussion Reference	How to attach a discussion to a person.
+Create Note	How to create a note on a person.
+Create Person	How to create a person.
+Create Person Conclusion	How to create a conclusion.
+Create Person Life Sketch	How to create a life sketch for a person.
+Create Person Source Reference	How to create a source reference on a person.
+Delete Discussion Reference	How to delete a discussion resource.
+Delete Person	How to delete a person.
+Delete Person Conclusion	How to delete a conclusion resource.
+Delete Person Source Reference	How to delete a source reference.
+Delete Person With Preconditions	How to do a conditional delete of a person.
+Head Person	How to read the headers for a person.
+Read Children of a Person	How to read the list of children of a person.
+Read Deleted Person	Example illustrating what happens during a read of person that has been deleted.
+Read Merged Person	Example illustrating what happens during a read of a person that has been merged.
+Read Not Found Person	Example illustrating what happens during a read of a person that doesn't exist.
+Read Not Modified Person	How to conditionally read a person that hasn't been modified.
+Read Notes	How to read the list of notes on a person.
+Read Parents of a Person	How to read the list of parents of a person, including any couple relationships of the parents.
+Read Person	How to read a person.
+Read Person Sources	How to query for the list of sources on a person.
+Read Spouses of a Person	How to read the spouses of a person.
+Read Spouses of a Person but no Relationship	How to read the spouses of a person but no Relationship is returned.
+Restore Person	How to un-delete or restore a person resource that has been deleted.
+Update Person Conclusion	How to update a conclusion resource.
+Update Person Custom Non-Event Fact	How to update a custom fact that is designated as "not an event" in the Family Tree.
+Update Person Life Sketch	How to create a life sketch for a person.
+Update Person Source Reference	How to update a source reference on a person.
+Update Person With Preconditions	How to do a conditional update of a person.
+Related Links
+
+
+
+Documentation > Resources > Tree Person Search
+Path
+Description
+Operations
+GET
+Example Requests
+Related Links
+Tree Person Search
+Path
+/platform/tree/search
+Production:	https://api.familysearch.org/platform/tree/search
+Beta:	https://apibeta.familysearch.org/platform/tree/search
+Integration (Integration):	https://api-integ.familysearch.org/platform/tree/search
+Description
+The Tree Person Search resource defines the interface for performing a search for persons in the tree.
+
+Each entry in the search results MAY contain content of the GEDCOM X media type that provides data about the results of the search, e.g., persons and relationships.
+
+Due to the complexities of search operations, the query parameter names are broken up into parts. The parts consist of a mandatory category, a mandatory term, an optional modifier, and an optional cardinality.
+
+The category serves as a namespace to avoid parameter name collision. The category q is defined to denote search query parameters which are documented in the Query Parameters table below. A category is required for all query parameter names except offset and count. Additional categories of f for filters and c for facets (or counts) are available. Filters are similar to query parameters, but do not allow any "fuzziness". The specified field value must match exactly or be filtered from the search results. Facets will count the terms and additional faceting information for the search term specified will be returned.
+
+The term is the actual query parameter name such as givenName, birthLikePlace, parentSurname, etc. Again, the supported terms are documented in the Query Parameters table below.
+
+The modifier modifies the way the search treats the specified term. The modifiers currently defined are exact, require,from and to.
+
+The exact modifier is supported for Name and Place terms. By default, names are compared using algorithms to increase recall such as using spelling variants, nicknames, abbreviations, removal of diacritics and white space, etc. If exact is applied to a name, only results where the name exactly matches will be returned. Place searches that are not specified as exact will search records within three jurisdiction levels of the place searched (e.g. searching for "Lehi, Utah County, Utah, USA" will return records in Lehi, Utah County, and Utah; but not all of USA). The default value for all exact parameters unless otherwise noted is 'off'. To make a term exact, the value must be 'on'.
+
+The require modifier is supported on all terms. When the require modifier is applied to a term, the term must be present for an entry to be included in the search results. The require modifier is automatically applied to the surname term.
+
+The to and from modifiers are supported for Date terms and are used for date ranges. Date ranges can be open-ended and are inclusive.
+
+The cardinality allows a term to be repeated and related terms to be associated correctly. For example, if the person being searched for was married two times, each spouse can be part of the query as shown below:
+
+spouse #1 - q.spouseGivenName.1="Mary Ann"&q.spouseSurname.1=Smith
+
+spouse #2 - q.spouseGivenName.2=Sally&q.spouseSurname.2=Brady.
+
+This instructs the search engine to search for spouses named "Mary Ann Smith" and "Sally Brady", but not for spouses named "Mary Ann Brady" or "Sally Smith". Any other search query parameters associated with a specific spouse must have the same cardinality designator so the parameters are associated correctly. The cardinality designator is an integer with 1 <= cardinality <= 9.
+
+General Guidelines
+URLs should be properly encoded.
+
+Values that contain white space must be surrounded by double quotes (i.e. q.givenName="Sally Mae").
+
+Name values may include the '*' and '?' wildcard characters.
+
+'BirthLike' dates and place values include dates and places of birth, christening, etc. The actual birthdate, if known, is preferred.
+
+'DeathLike' dates and place values include dates and places of death, burial, cremation etc. The actual death date, if known, is preferred.
+
+Date values are specified as Gedcomx Simple Date values ( ±YYYY[-MM[-DD]] ).
+
+Place values are specified as either a string comparison or as a standardized place name, depending on the context of the search.
+
+A place query value expects a place string that consists of one or more jurisdictional levels which may include city, county, state, country, etc. Wildcards may be used for increased flexibility. (i.e. q.birthLikePlace = “Lehi, Utah County, Utah, USA”).
+A place filter or facet term often has a digit appended at the end of the term name. This helps specify multivalued terms. For example, f.birthLikePlace0 is the term to filter the country, f.birthLikePlace1 is the term to filter the state, and so on.
+A place filter or facet value expects a precise indication of place location identified in Places [https://www.familysearch.org/developers/docs/api/places/Place_resource]. These values are specified in standardized place name format as [parent_place_id],[place_name]. (i.e. f.birthLikePlace1=3,Alberta where the place_id of Canada is 3). Tip: The faceting information returned by queries with facet (count) terms enabled includes a “params” field, which specifies the parameters that could be used to filter a query by that facet’s value. For place terms, the parameter values are already in standardized form, making it easier to create a query filtered by that place, without having to look up the place id.
+father/mother/parent terms - 'father' terms are parents with sex=Male; 'mother' terms are parents with sex=Female; 'parent' terms are parents with sex other than Male or Female.
+
+Single term searches are not allowed unless the single term is surname.
+
+Searches that do not include a surname will experience higher failure rates due to the fact that they are very resource intensive.
+
+ 
+
+Query (category q) Parameters
+Name	Description
+q.givenName	The given name of the person being searched.
+q.surname	The family name of the person being searched.
+q.sex	The sex of the person being searched. Valid values are documented in Gedcomx Known Gender Types. 'http://gedcomx.org/' should not be included in the value. 'Male', 'Female', etc. is all that is required.
+q.birthLikeDate	The birth like Gedcomx date of the person being searched.
+q.birthLikePlace	The birth like place of the person being searched.
+q.deathLikeDate	The death like Gedcomx date of the person being searched.
+q.deathLikePlace	The death like place of the person being searched.
+q.marriageLikeDate	The marriage like Gedcomx date of the person being searched.
+q.marriageLikePlace	The marriage like place of the person being searched.
+q.residenceDate	A Gedcomx date of residence of the person being searched.
+q.residencePlace	A place of residence of the person being searched.
+q.fatherGivenName	The given name of a father of the person being searched.
+q.fatherSurname	The family name of a father of the person being searched.
+q.fatherBirthLikePlace	The birth like place of a father of the person being searched.
+q.motherGivenName	The given name of a mother of the person being searched.
+q.motherSurname	The family name of a mother of the person being searched.
+q.motherBirthLikePlace	The birth like place of a mother of the person being searched.
+q.parentGivenName	The given name of a parent of the person being searched. If the sex is known to be 'Male' or 'Female', use 'mother' or 'father' rather than 'parent'.
+q.parentSurname	The family name of a parent of the person being searched. If the sex is known to be 'Male' or 'Female', use 'mother' or 'father' rather than 'parent'.
+q.parentBirthLikePlace	The birth like place of a parent of the person being searched.
+q.spouseGivenName	The given name of the spouse of the person being searched.
+q.spouseSurname	The family name of the spouse of the person being searched.
+Other Parameters
+Name	Description
+offset	The 0 based index of the first result to be returned. Default = 0. 0 <= offset <= 4999
+count	The maximum number of search results to return. Default = 20. 1 <= count <= 100.
+The search will only return the first 5000 results. Therefore, if offset + count is >= 5000, the results will be truncated. If offset > 5000, a bad request status code will be returned.
+ 
+
+Filter Guidelines
+The f category is used to filter the search and is supported on all terms.
+
+f.term's often have a digit appended at the end of the term name. This helps specify multivalued terms. For example f.birthLikePlace0 is the term to filter the country, f.birthLikePlace1 is the term to filter the state, and so on.
+
+Note: Using an f.term with an empty value will require that the term be empty in search results.
+
+Note: Using the f.treeId and the f.collectionId values requires turning on the Pending Modification for search.include.cet. See:
+
+API Evolution Guide.
+The f.collectionId is bounded by the collections FamilySearch makes available for searching. Right now the values are:
+
+
+tree or the uri https://familysearch.org/platform/collections/tree - FamilySearch Family Tree
+cet or the uri https://familysearch.org/platform/collections/cet - CET collections
+If no value is provided and the search.include.cet pending modification is enabled, results may include persons from both collections.
+c category facets may be used to help determine valuable filters to be used on subsequent calls
+
+Some example filter terms are:
+
+f.birthPlace0 f.birthPlace1 f.birthPlace2 f.birthYear0
+f.birthYear1 f.deathLikePlace0 f.deathLikePlace1 f.deathLikePlace2 f.deathYear0 f.deathYear1 f.eventPlaceLevel0 f.eventPlaceLevel1 f.eventPlaceLevel2 f.eventPlaceLevel3 f.eventPlaceLevel4 f.eventPlaceLevel5 f.place0 f.place1 f.place2 f.fatherGivennameStandard f.fatherSurnameStandard f.gender f.givenNameStandard f.maritalStatus f.marriagePlaceLevel0 f.marriagePlaceLevel1 f.marriagePlaceLevel2 f.marriageYear0 f.marriageYear1 f.motherGivennameStandard f.motherSurnameStandard f.spouseGivennameStandard f.spouseSurnameStandard f.surnameStandard f.treeId f.collectionId
+
+
+ 
+
+Facet Guidelines
+The c category is used to specify faceting or counted terms to be returned by the search. When set to "on", search will return faceting for the search term specified. e.g. c.gender=on
+
+The returned Gedcomx object will have a facets object added to it. A facets object will be a list of facet objects.
+A facet object will consist of the following:
+
+a displayName string containing the label that will be displayed to the user, this field cannot be null or empty
+a params string containing the query parameters that would be added to the request in order to filter and facet the next level, this field can be null or empty
+a count showing how many results match that face, this field can be null or empty
+a facets list of facet objects, this list can be null or empty
+Some example facet terms are:
+
+c.birthPlaceLevel0 c.birthPlaceLevel1 c.birthPlaceLevel2 c.birthYear0 c.birthYear1 c.deathPlaceLevel0 c.deathPlaceLevel1 c.deathPlaceLevel2 c.deathYear0 c.deathYear1 c.gender c.marriagePlaceLevel0 c.marriagePlaceLevel1 c.marriagePlaceLevel2 c.marriageYear0 c.marriageYear1 c.place0 c.place1 c.place2
+
+ 
+
+The following is an example query using multiple filters and facets:
+http://www.familysearch.org/platform/tree/search?q.surname=Smith&c.birthLikePlace2=on&f.birthLikePlace1=3%2CYukon&f.birthLikePlace1=3%2CAlberta&count=10
+
+Operations
+GET - Read the results of a search.
+
+Produces - Specify a returned data format using the Accept header.
+application/atom+xml
+application/json
+application/x-gedcomx-atom+json
+application/xml
+text/html
+This method does not accept any parameters.
+
+Status Codes
+200  -  Upon a successful read.
+204  -  Upon a successful search with no results.
+400  -  If the request was unable to be understood by the application. See response warning headers for details.
+429  -  If the request was throttled.
+Example Requests
+Search for tree persons - first page	How to get the first page of tree person search results.
+Search for tree persons - next page	How to get the next page (and by extension, subsequent pages) of tree person search results..
+Search for tree persons with cardinality and modifier.	How to search for tree persons using cardinality and modifiers.
+Search for tree persons with wildcard characters	How to search for tree persons using wildcard characters in the search parameter values.
+
+
+
+Documentation > Resources > Match by Tree Person Id
+Path
+Description
+Operations
+GET
+HEAD
+POST
+Example Requests
+Related Links
+Match by Tree Person Id
+Path
+/platform/tree/persons/{pid}/matches
+Production:	https://api.familysearch.org/platform/tree/persons/{pid}/matches
+Beta:	https://apibeta.familysearch.org/platform/tree/persons/{pid}/matches
+Integration (Integration):	https://api-integ.familysearch.org/platform/tree/persons/{pid}/matches
+Description
+The Match by Tree Person Id resource defines the set of matches in the system for a person in the Family Tree.
+
+Certification Required
+
+The scope of the match results can be limited to a specific collection using the collection query parameter.
+
+Use of the collection query parameter in a production environment is restricted to applications that have been certified. Applications requesting record matches must be certified. See Record Hinting Certification.
+
+Currently, only the following collections support match results:
+
+title	identifier	description
+FamilySearch Tree	https://familysearch.org/platform/collections/tree (or just "tree")	The set of matches (possible duplicates) in the FamilySearch tree.
+FamilySearch Records	https://familysearch.org/platform/collections/records (or just "records")	The set of matches in the FamilySearch records.
+FamilySearch CETs	https://familysearch.org/platform/collections/cet (or just "cet")	The set of matches in the FamilySearch Cet.
+If no collection is specified, the request will be interpreted as matches in the FamilySearch tree (possible duplicates) Family Tree.
+
+Each match has a "status" that indicates it to be in one of the following states:
+
+name	identifier	description
+Pending	http://familysearch.org/v1/Pending	The match has neither been accepted nor rejected.
+Accepted	http://familysearch.org/v1/Accepted	The match has been accepted as valid.
+Rejected	http://familysearch.org/v1/Rejected	The match has been rejected as invalid.
+Match results can be filtered using the status query parameter.
+
+This resource also provides the interface to update the match status for possible matches.
+
+Operations
+GET - Read a set of matches for the given tree person id. FamilySearch tree matches are known as the possible duplicates for the given tree person id. For possible duplicates the tree matches that are no longer found or deleted are filtered from the list.
+
+Produces - Specify a returned data format using the Accept header.
+application/atom+xml
+application/json
+application/x-gedcomx-atom+json
+application/xml
+text/html
+Parameters
+Name	Type	Description
+pid	path	The ID of the person whose matches are to be returned.
+collection	query	The name of the collection in which to find matches. The possible values are tree, cet, or records. Default=tree.
+confidence	query	The minimum level of confidence of the results. The higher the number, the higher the confidence desired. Min=1. Max=5.
+count	query	The number of results to provide. Default=5. Min=1. Max=100.
+status	query	The match status(es) by which to filter the results. For tree collection matches the default is pending and accepted. For record collection matches the default is pending matches.
+treeId	query	The tree id of the tree in CET to match against. For use with the CET collection only.
+Status Codes
+200  -  Upon a successful read.
+204  -  Upon a successful query with no results.
+301  -  If the person has been merged.
+404  -  If the person was not found.
+410  -  If the person has been deleted.
+429  -  If the request was throttled.
+HEAD - Determine if there are matches for the given person id.
+
+Produces - Specify a returned data format using the Accept header.
+application/atom+xml
+application/json
+application/x-gedcomx-atom+json
+application/xml
+text/html
+Parameters
+Name	Type	Description
+pid	path	The ID of the person whose matches are requested.
+collection	query	The name of the collection in which to find matches. The possible values are tree, cet, or records. Default=tree.
+confidence	query	The level of confidence of the results. The higher the number, the higher the confidence desired. Min=1. Max=5.
+count	query	The number of results to provide. Default=5. Min=1. Max=100.
+status	query	The match status(es) by which to filter the results. For tree collection matches the default is pending and accepted. For record collection matches the default is pending matches.
+treeId	query	The tree id of the CET tree to match against. For use with the cet collection only.
+Status Codes
+200  -  Upon a successful read.
+204  -  Upon a successful query with no results.
+301  -  If the person has been merged.
+404  -  If the person was not found.
+410  -  If the person has been deleted.
+429  -  If the request was throttled.
+POST - Certification Required
+
+Add or modify a match resolution for the given tree person id. The status parameter should indicate if the match is Pending, Accepted, or Rejected. The body of the POST should contain a gedcomx document with a single record persona id for the match resolution. If an Accepted or Rejected match resolution declaration already exists for the given tree person id, an error will be returned. The current resolution should first be reset to Pending, then a new match resolution may be set.
+
+A reason string should be provided indicating why the user believes this is or is not a match.
+
+Produces - Specify a returned data format using the Accept header.
+application/atom+xml
+application/json
+application/x-gedcomx-atom+json
+application/xml
+text/html
+Consumes - Specify the incoming data format using the Content-Type header.
+application/x-fs-v1+json
+application/x-fs-v1+xml
+application/x-gedcomx-v1+json
+application/x-gedcomx-v1+xml
+Parameters
+Name	Type	Description
+pid	path	The ID of the person the match is to be added to or modified.
+collection	query	The name of the collection in which to add or modify the match resolution. The only possible value and default is records. Required.
+status	query	The match status of match resolution to add or modify. The allowed values are pending, accepted, or rejected. Required.
+body	request-body	The Gedcomx body.
+Status Codes
+204  -  The update was successful.
+301  -  If the referenced person has been merged into another person.
+404  -  If the referenced person is not found.
+410  -  If the referenced person has been deleted.
+429  -  If the request was throttled.
+Example Requests
+Read Matches by Tree Person Id	How to get the record matches for a tree person id.
+Read Matches by Tree Person Id for All Match Status Types	How to get the record matches for a tree person id for all types of match statuses.
+Read Matches by Tree Person Id with Higher Confidence	How to get the record matches for a tree person id with higher confidence that are accepted.
+Read Person Possible Duplicates	How to get the possible duplicates for a person.
+Update Match Status by Tree Person Id for Record Matches	How to designate a match status for record matches of a tree person id.
+Related Links
+
+
+
+
+
+Documentation > Resources > Relationship Finder
+Path
+Description
+Operations
+GET
+Example Requests
+Relationship Finder
+Prototype: This resource is currently in a prototype development state. It may or may not be operational and the interface may change prior to release. Feedback is welcome.
+Path
+/platform/tree/persons/{pid}/relationships/{opid}
+Production:	https://api.familysearch.org/platform/tree/persons/{pid}/relationships/{opid}
+Beta:	https://apibeta.familysearch.org/platform/tree/persons/{pid}/relationships/{opid}
+Integration (Integration):	https://api-integ.familysearch.org/platform/tree/persons/{pid}/relationships/{opid}
+Description
+The Relationship Finder resource is used to to find how two persons in the tree are related. For finding how the currently logged in user is related to a person in the tree, pass in "CURRENT" for the first person Id. The later option requires an authenticated session.
+
+Operations
+GET - Return a list of persons which show how {pid} is related to a {opid}.
+
+
+To determine which of the persons returned is the common ancestor the <fs:displatProperties> element will contain a "role" field that contains "commonAncestor" as a value.
+
+
+Produces - Specify a returned data format using the Accept header.
+application/json
+application/x-fs-v1+json
+application/x-gedcomx-v1+json
+text/html
+Parameters
+Name	Type	Description
+opid	path	The terminal id to check for relation. Value is required.
+pid	path	The the start id to check for relation. Value is required.
+personDetails	query	When the query parameter is set to true, the additional person details will be returned for each person. Default=false.
+Status Codes
+200  -  Upon a successful read.
+204  -  Upon a successful query with no results.
+400  -  If the query to be processed was unable to be understood by the application.
+
+
+
+Tools & SDKs
+These software development kits (SDKs) are being developed for the FamilySearch API. We encourage you to support and contribute to these SDKs as needed. The repositories that are hosted in the Github "FamilySearch" organization are developed and supported by FamilySearch. All others are developed by the community, as such, caution and due diligence should be taken.
+
+Java
+GEDCOM X Java
+PHP
+A PHP SDK for the FamilySearch API
+
+FS-PHP-Lite SDK 
+GEDCOM X PHP 
+C#
+Developed as an extension to the library.
+
+GEDCOM X C#
+FamilySearch C# Lite SDK Not Active
+JavaScript
+A JavaScript SDK for the FamilySearch API.
+
+FamilySearch Lite JavaScript SDK
+Python
+Python SDK for FamilySearch API Not Active
+It is designed for Python 3 and 2.7. Python 2.6 is the earliest supported version, but bugfixes are low-priority. 2.5 and earlier are not guaranteed to work, or supported, and are considered legacy.
+Ruby
+OmniAuth FamilySearch Not Active
+A Ruby OmniAuth strategy for using OAuth2 with the FamilySearch API.
+Other Tools
+Bruno - An open source API client that can be used to test HTTP calls.
+Fiddler - A debugging proxy to inspect and modify HTTP and HTTPS traffic
+
+
+
+
+
+FamilySearch
+Developer API Docs Tools & SDKs Guides Compatibility News
+
+
+Help
+Messages
+Documentation > Data Formats > Person
+Person (JSON)
+A person.
+
+URI:	Person
+Extends:	Subject
+Properties
+Name	Type	Description	
+private	boolean	Whether this person has been designated for limited distribution or display.	
+living	boolean	Living status of the person as treated by the system. The value of this property is intended to be based on a system-specific calculation and therefore has limited portability. Conclusions about the living status of a person can be modeled with a fact.	FTR
+gender	Gender	The gender conclusion for the person.	
+names	array of Name	The name conclusions for the person.	
+facts	array of Fact	The fact conclusions for the person.	
+display	DisplayProperties	Display properties for the person. Display properties are not specified by GEDCOM X core, but as extension elements by GEDCOM X RS.	
+Properties inherited from Subject
+evidence	array of EvidenceReference	References to the evidence being referenced for this subject.	
+media	array of SourceReference	References to multimedia resources associated with this subject.	
+identifiers	map of array of string	The list of identifiers for the agent.	
+extracted	boolean	Whether this subject has been identified as "extracted", meaning it captures information extracted from a single source.	FTU
+Properties inherited from Conclusion
+attribution	Attribution	Attribution metadata for a conclusion.	
+sources	array of SourceReference	The source references for a conclusion.	
+analysis	ResourceReference	A reference to the analysis document explaining the analysis that went into this conclusion.	FTU
+notes	array of Note	Notes about a person.	
+lang	string	The language of the conclusion. See http://www.w3.org/International/articles/language-tags/	FTR
+confidence	string	The level of confidence the contributor has about the data.	
+sortKey	string	A sort key in relation to other facts for display purposes.	
+Properties inherited from HypermediaEnabledData
+links	map of Link	The list of hypermedia links. Links are not specified by GEDCOM X core, but as extension elements by GEDCOM X RS.	
+Properties inherited from ExtensibleData
+id	string	A local, context-specific id for the data.	
+Example
+{
+  "private" : true,
+  "living" : true,
+  "gender" : {
+    "type" : "...",
+    "attribution" : {
+      "contributor" : { },
+      "modified" : 12345,
+      "changeMessage" : "...",
+      "changeMessageResource" : "...",
+      "creator" : { },
+      "created" : 12345,
+      "id" : "..."
+    },
+    "sources" : [ {
+      "attribution" : { },
+      "description" : "...",
+      "descriptionId" : "...",
+      "qualifiers" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    }, {
+      "attribution" : { },
+      "description" : "...",
+      "descriptionId" : "...",
+      "qualifiers" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    } ],
+    "analysis" : {
+      "resourceId" : "...",
+      "resource" : "..."
+    },
+    "notes" : [ {
+      "subject" : "...",
+      "text" : "...",
+      "attribution" : { },
+      "lang" : "...",
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    }, {
+      "subject" : "...",
+      "text" : "...",
+      "attribution" : { },
+      "lang" : "...",
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    } ],
+    "lang" : "...",
+    "confidence" : "...",
+    "sortKey" : "...",
+    "links" : {
+      "property1" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      },
+      "property2" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      }
+    },
+    "id" : "..."
+  },
+  "names" : [ {
+    "preferred" : true,
+    "date" : {
+      "original" : "...",
+      "formal" : "...",
+      "normalized" : [ { }, { } ],
+      "confidence" : "...",
+      "id" : "..."
+    },
+    "nameForms" : [ {
+      "fullText" : "...",
+      "parts" : [ { }, { } ],
+      "lang" : "...",
+      "id" : "..."
+    }, {
+      "fullText" : "...",
+      "parts" : [ { }, { } ],
+      "lang" : "...",
+      "id" : "..."
+    } ],
+    "type" : "...",
+    "attribution" : {
+      "contributor" : { },
+      "modified" : 12345,
+      "changeMessage" : "...",
+      "changeMessageResource" : "...",
+      "creator" : { },
+      "created" : 12345,
+      "id" : "..."
+    },
+    "sources" : [ {
+      "attribution" : { },
+      "description" : "...",
+      "descriptionId" : "...",
+      "qualifiers" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    }, {
+      "attribution" : { },
+      "description" : "...",
+      "descriptionId" : "...",
+      "qualifiers" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    } ],
+    "analysis" : {
+      "resourceId" : "...",
+      "resource" : "..."
+    },
+    "notes" : [ {
+      "subject" : "...",
+      "text" : "...",
+      "attribution" : { },
+      "lang" : "...",
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    }, {
+      "subject" : "...",
+      "text" : "...",
+      "attribution" : { },
+      "lang" : "...",
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    } ],
+    "lang" : "...",
+    "confidence" : "...",
+    "sortKey" : "...",
+    "links" : {
+      "property1" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      },
+      "property2" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      }
+    },
+    "id" : "..."
+  }, {
+    "preferred" : true,
+    "date" : {
+      "original" : "...",
+      "formal" : "...",
+      "normalized" : [ { }, { } ],
+      "confidence" : "...",
+      "id" : "..."
+    },
+    "nameForms" : [ {
+      "fullText" : "...",
+      "parts" : [ { }, { } ],
+      "lang" : "...",
+      "id" : "..."
+    }, {
+      "fullText" : "...",
+      "parts" : [ { }, { } ],
+      "lang" : "...",
+      "id" : "..."
+    } ],
+    "type" : "...",
+    "attribution" : {
+      "contributor" : { },
+      "modified" : 12345,
+      "changeMessage" : "...",
+      "changeMessageResource" : "...",
+      "creator" : { },
+      "created" : 12345,
+      "id" : "..."
+    },
+    "sources" : [ {
+      "attribution" : { },
+      "description" : "...",
+      "descriptionId" : "...",
+      "qualifiers" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    }, {
+      "attribution" : { },
+      "description" : "...",
+      "descriptionId" : "...",
+      "qualifiers" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    } ],
+    "analysis" : {
+      "resourceId" : "...",
+      "resource" : "..."
+    },
+    "notes" : [ {
+      "subject" : "...",
+      "text" : "...",
+      "attribution" : { },
+      "lang" : "...",
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    }, {
+      "subject" : "...",
+      "text" : "...",
+      "attribution" : { },
+      "lang" : "...",
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    } ],
+    "lang" : "...",
+    "confidence" : "...",
+    "sortKey" : "...",
+    "links" : {
+      "property1" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      },
+      "property2" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      }
+    },
+    "id" : "..."
+  } ],
+  "facts" : [ {
+    "date" : {
+      "original" : "...",
+      "formal" : "...",
+      "normalized" : [ { }, { } ],
+      "confidence" : "...",
+      "id" : "..."
+    },
+    "place" : {
+      "original" : "...",
+      "normalized" : [ { }, { } ],
+      "description" : "...",
+      "confidence" : "...",
+      "id" : "..."
+    },
+    "value" : "...",
+    "qualifiers" : [ {
+      "name" : "...",
+      "value" : "..."
+    }, {
+      "name" : "...",
+      "value" : "..."
+    } ],
+    "type" : "...",
+    "attribution" : {
+      "contributor" : { },
+      "modified" : 12345,
+      "changeMessage" : "...",
+      "changeMessageResource" : "...",
+      "creator" : { },
+      "created" : 12345,
+      "id" : "..."
+    },
+    "sources" : [ {
+      "attribution" : { },
+      "description" : "...",
+      "descriptionId" : "...",
+      "qualifiers" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    }, {
+      "attribution" : { },
+      "description" : "...",
+      "descriptionId" : "...",
+      "qualifiers" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    } ],
+    "analysis" : {
+      "resourceId" : "...",
+      "resource" : "..."
+    },
+    "notes" : [ {
+      "subject" : "...",
+      "text" : "...",
+      "attribution" : { },
+      "lang" : "...",
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    }, {
+      "subject" : "...",
+      "text" : "...",
+      "attribution" : { },
+      "lang" : "...",
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    } ],
+    "lang" : "...",
+    "confidence" : "...",
+    "sortKey" : "...",
+    "links" : {
+      "property1" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      },
+      "property2" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      }
+    },
+    "id" : "..."
+  }, {
+    "date" : {
+      "original" : "...",
+      "formal" : "...",
+      "normalized" : [ { }, { } ],
+      "confidence" : "...",
+      "id" : "..."
+    },
+    "place" : {
+      "original" : "...",
+      "normalized" : [ { }, { } ],
+      "description" : "...",
+      "confidence" : "...",
+      "id" : "..."
+    },
+    "value" : "...",
+    "qualifiers" : [ {
+      "name" : "...",
+      "value" : "..."
+    }, {
+      "name" : "...",
+      "value" : "..."
+    } ],
+    "type" : "...",
+    "attribution" : {
+      "contributor" : { },
+      "modified" : 12345,
+      "changeMessage" : "...",
+      "changeMessageResource" : "...",
+      "creator" : { },
+      "created" : 12345,
+      "id" : "..."
+    },
+    "sources" : [ {
+      "attribution" : { },
+      "description" : "...",
+      "descriptionId" : "...",
+      "qualifiers" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    }, {
+      "attribution" : { },
+      "description" : "...",
+      "descriptionId" : "...",
+      "qualifiers" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    } ],
+    "analysis" : {
+      "resourceId" : "...",
+      "resource" : "..."
+    },
+    "notes" : [ {
+      "subject" : "...",
+      "text" : "...",
+      "attribution" : { },
+      "lang" : "...",
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    }, {
+      "subject" : "...",
+      "text" : "...",
+      "attribution" : { },
+      "lang" : "...",
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    } ],
+    "lang" : "...",
+    "confidence" : "...",
+    "sortKey" : "...",
+    "links" : {
+      "property1" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      },
+      "property2" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      }
+    },
+    "id" : "..."
+  } ],
+  "display" : {
+    "name" : "...",
+    "gender" : "...",
+    "lifespan" : "...",
+    "birthDate" : "...",
+    "birthPlace" : "...",
+    "deathDate" : "...",
+    "deathPlace" : "...",
+    "marriageDate" : "...",
+    "marriagePlace" : "...",
+    "ascendancyNumber" : "...",
+    "descendancyNumber" : "...",
+    "relationshipDescription" : "...",
+    "familiesAsParent" : [ {
+      "parent1" : { },
+      "parent2" : { },
+      "children" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    }, {
+      "parent1" : { },
+      "parent2" : { },
+      "children" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    } ],
+    "familiesAsChild" : [ {
+      "parent1" : { },
+      "parent2" : { },
+      "children" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    }, {
+      "parent1" : { },
+      "parent2" : { },
+      "children" : [ { }, { } ],
+      "links" : {
+        "property1" : { },
+        "property2" : { }
+      },
+      "id" : "..."
+    } ],
+    "role" : "...",
+    "id" : "..."
+  },
+  "evidence" : [ {
+    "resourceId" : "...",
+    "resource" : "...",
+    "attribution" : {
+      "contributor" : { },
+      "modified" : 12345,
+      "changeMessage" : "...",
+      "changeMessageResource" : "...",
+      "creator" : { },
+      "created" : 12345,
+      "id" : "..."
+    },
+    "links" : {
+      "property1" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      },
+      "property2" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      }
+    },
+    "id" : "..."
+  }, {
+    "resourceId" : "...",
+    "resource" : "...",
+    "attribution" : {
+      "contributor" : { },
+      "modified" : 12345,
+      "changeMessage" : "...",
+      "changeMessageResource" : "...",
+      "creator" : { },
+      "created" : 12345,
+      "id" : "..."
+    },
+    "links" : {
+      "property1" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      },
+      "property2" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      }
+    },
+    "id" : "..."
+  } ],
+  "media" : [ {
+    "attribution" : {
+      "contributor" : { },
+      "modified" : 12345,
+      "changeMessage" : "...",
+      "changeMessageResource" : "...",
+      "creator" : { },
+      "created" : 12345,
+      "id" : "..."
+    },
+    "description" : "...",
+    "descriptionId" : "...",
+    "qualifiers" : [ {
+      "name" : "...",
+      "value" : "..."
+    }, {
+      "name" : "...",
+      "value" : "..."
+    } ],
+    "links" : {
+      "property1" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      },
+      "property2" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      }
+    },
+    "id" : "..."
+  }, {
+    "attribution" : {
+      "contributor" : { },
+      "modified" : 12345,
+      "changeMessage" : "...",
+      "changeMessageResource" : "...",
+      "creator" : { },
+      "created" : 12345,
+      "id" : "..."
+    },
+    "description" : "...",
+    "descriptionId" : "...",
+    "qualifiers" : [ {
+      "name" : "...",
+      "value" : "..."
+    }, {
+      "name" : "...",
+      "value" : "..."
+    } ],
+    "links" : {
+      "property1" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      },
+      "property2" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      }
+    },
+    "id" : "..."
+  } ],
+  "identifiers" : {
+    "property1" : [ "...", "..." ],
+    "property2" : [ "...", "..." ]
+  },
+  "extracted" : true,
+  "attribution" : {
+    "contributor" : {
+      "resourceId" : "...",
+      "resource" : "..."
+    },
+    "modified" : 12345,
+    "changeMessage" : "...",
+    "changeMessageResource" : "...",
+    "creator" : {
+      "resourceId" : "...",
+      "resource" : "..."
+    },
+    "created" : 12345,
+    "id" : "..."
+  },
+  "sources" : [ {
+    "attribution" : {
+      "contributor" : { },
+      "modified" : 12345,
+      "changeMessage" : "...",
+      "changeMessageResource" : "...",
+      "creator" : { },
+      "created" : 12345,
+      "id" : "..."
+    },
+    "description" : "...",
+    "descriptionId" : "...",
+    "qualifiers" : [ {
+      "name" : "...",
+      "value" : "..."
+    }, {
+      "name" : "...",
+      "value" : "..."
+    } ],
+    "links" : {
+      "property1" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      },
+      "property2" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      }
+    },
+    "id" : "..."
+  }, {
+    "attribution" : {
+      "contributor" : { },
+      "modified" : 12345,
+      "changeMessage" : "...",
+      "changeMessageResource" : "...",
+      "creator" : { },
+      "created" : 12345,
+      "id" : "..."
+    },
+    "description" : "...",
+    "descriptionId" : "...",
+    "qualifiers" : [ {
+      "name" : "...",
+      "value" : "..."
+    }, {
+      "name" : "...",
+      "value" : "..."
+    } ],
+    "links" : {
+      "property1" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      },
+      "property2" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      }
+    },
+    "id" : "..."
+  } ],
+  "analysis" : {
+    "resourceId" : "...",
+    "resource" : "..."
+  },
+  "notes" : [ {
+    "subject" : "...",
+    "text" : "...",
+    "attribution" : {
+      "contributor" : { },
+      "modified" : 12345,
+      "changeMessage" : "...",
+      "changeMessageResource" : "...",
+      "creator" : { },
+      "created" : 12345,
+      "id" : "..."
+    },
+    "lang" : "...",
+    "links" : {
+      "property1" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      },
+      "property2" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      }
+    },
+    "id" : "..."
+  }, {
+    "subject" : "...",
+    "text" : "...",
+    "attribution" : {
+      "contributor" : { },
+      "modified" : 12345,
+      "changeMessage" : "...",
+      "changeMessageResource" : "...",
+      "creator" : { },
+      "created" : 12345,
+      "id" : "..."
+    },
+    "lang" : "...",
+    "links" : {
+      "property1" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      },
+      "property2" : {
+        "href" : "...",
+        "template" : "...",
+        "title" : "...",
+        "type" : "...",
+        "accept" : "...",
+        "allow" : "...",
+        "hreflang" : "...",
+        "count" : 12345,
+        "offset" : 12345,
+        "results" : 12345
+      }
+    },
+    "id" : "..."
+  } ],
+  "lang" : "...",
+  "confidence" : "...",
+  "sortKey" : "...",
+  "links" : {
+    "property1" : {
+      "href" : "...",
+      "template" : "...",
+      "title" : "...",
+      "type" : "...",
+      "accept" : "...",
+      "allow" : "...",
+      "hreflang" : "...",
+      "count" : 12345,
+      "offset" : 12345,
+      "results" : 12345
+    },
+    "property2" : {
+      "href" : "...",
+      "template" : "...",
+      "title" : "...",
+      "type" : "...",
+      "accept" : "...",
+      "allow" : "...",
+      "hreflang" : "...",
+      "count" : 12345,
+      "offset" : 12345,
+      "results" : 12345
+    }
+  },
+  "id" : "..."
+}
+About
+Volunteer
+Blog
+Site Map
+Solutions Gallery
+
+
+-------------
+
+
+Authentication
+Authorities
+Change History
+Collections
+Discussions
+Genealogies
+Groups
+Memories
+Names
+Ordinances
+Parents and Children
+Pedigree
+Person
+Places
+Records
+Search and Match
+Sources
+Spouses
+Trees
+User
+Utilities
+Vocabularies
+Other
+Resources
+Artifacts
+No resources are available.
+
+Authentication
+Access Token	POST	The resource for obtaining an access token.
+Authentication Guide		Guide for authentication.
+Authorization	GET , POST	The OAuth 2.0 authorization endpoint for a client application.
+Logout	POST	Invalidate the session
+Authorities
+Date	GET	A date.
+Change History
+Child-and-Parents Relationship Change History	GET , HEAD	The change history of a child-and-parents relationship.
+Couple Relationship Change History	GET , HEAD	The change history of a couple relationship.
+Person Change History	GET , HEAD	The change history of a person.
+Restore Change	POST	Action to restore a change to a person or relationship.
+Collections
+FamilySearch Collections	GET	The set of all collections available in the FamilySearch API.
+FamilySearch Controlled Vocabulary	GET	The FamilySearch Controlled Vocabulary.
+FamilySearch Dates	GET	The collection of historical dates known to the application.
+FamilySearch Discussions	GET	The collection of all discussions about FamilySearch resources.
+FamilySearch Family Tree	GET	The FamilySearch Family Tree.
+FamilySearch Genealogies	GET	The FamilySearch user-submitted genealogies.
+FamilySearch Memories	GET	The collection of memories provided by users of FamilySearch.
+FamilySearch Place Authority	GET	The FamilySearch Place Authority.
+FamilySearch User-Defined Sources	GET	The collection of all sources defined by FamilySearch users.
+Home	GET	A description of the FamilySearch API itself as a collection.
+Discussions
+Comment	DELETE	A comment.
+Comments	GET , POST	A list of comments on a discussion.
+Discussion	GET , HEAD , POST	A discussion.
+Discussions	POST	The set of discussions.
+Genealogies
+Prototype Genealogies Conclusion	DELETE	A conclusion on a person or relationship.
+Prototype Genealogies Person	DELETE , GET , POST	A person.
+Prototype Genealogies Person Restore	POST	Action to restore a person.
+Prototype Genealogies Persons	GET , POST	The set of persons in the FamilySearch user-submitted genealogies.
+Prototype Genealogies Relationship	DELETE , POST	A relationship
+Prototype Genealogies Source Description	DELETE , GET , POST	A source description
+Prototype Genealogies Source Descriptions	POST	The set of source descriptions in a tree in user-submitted genealogies.
+Prototype Genealogies Tree	DELETE , GET , POST	A user-submitted genealogy tree
+Prototype Genealogies Trees	GET , POST	The set of trees in the FamilySearch user-submitted genealogies.
+Prototype Match by Genealogies Person Id	GET	The matches for a person in user-submitted genealogies.
+Groups
+No resources are available.
+
+Memories
+Memories	GET , POST	The list of all memories in the system.
+Memory	DELETE , GET , POST	A memory
+Memory Artifact	POST	The artifact of a memory.
+Memory Artifact Coverage	DELETE	The coverage of a memory artifact.
+Memory Comment	DELETE	A comment on a FamilySearch Memory.
+Memory Comments	GET , POST	A list of comments on a memory.
+Memory Persona	DELETE , GET , POST	A memories persona.
+Memory Personas	GET , POST	A set of personas in a memory.
+User Memories	GET	The list of artifacts of memories that belong to a specific user.
+Names
+Prototype Script	GET	Script type of a name.
+Prototype Segments	GET , POST	Segments of a name.
+Ordinances
+Ordinances API		Because of policy changes by FamilySearch management, the Ordinances Service APIs are currently not available to new products. If you believe that a policy exception should be made for your product, please send a message with justification to devsupport@familysearch.org.
+Parents and Children
+Child-and-Parents Relationship	DELETE , GET , HEAD , POST	A child-and-parents relationship.
+Child-and-Parents Relationship Change History	GET , HEAD	The change history of a child-and-parents relationship.
+Child-and-Parents Relationship Conclusion	DELETE	A single fact on a child-and-parents relationship.
+Child-and-Parents Relationship Note	DELETE , GET , POST	A note on a child-and-parents relationship.
+Child-and-Parents Relationship Notes	GET , POST	The set of notes attached to a child-and-parents relationship.
+Child-and-Parents Relationship Parent	DELETE	A specific parent in a child-and-parents relationship.
+Child-and-Parents Relationship Parents Ordering	POST	A child-and-parents relationship parents ordering.
+Child-and-Parents Relationship Restore	POST	Action to restore a child-and-parents relationship.
+Child-and-Parents Relationship Source Reference	DELETE	A source reference.
+Child-and-Parents Relationship Source References	GET , POST	A set of source references on a child-and-parents relationship.
+Child-and-Parents Relationship Sources Query	GET	A query for all sources for a child-and-parents relationship.
+Relationships	POST	The set of relationships in the application.
+Pedigree
+Ancestry	GET	The query for the ancestry of a person.
+Descendancy	GET	The query for the descendancy of a person.
+Prototype Relationship Finder	GET	Find the set of relationships that show how {pid} is related to {opid}.
+Person
+Children of a Person	GET	The set of children for a person.
+Current Tree Person	GET	The query for the tree person that represents the current user.
+Families of a Person	GET	The families for a person.
+Parents of a Person	GET	The set of parents for a person.
+Person	DELETE , GET , HEAD , POST	A person.
+Person Change History	GET , HEAD	The change history of a person.
+Person Conclusion	DELETE	A single name, gender, or fact on a person.
+Person Discussion Reference	DELETE	A single discussion reference.
+Person Memories	GET , POST	The list of memories attached to a person.
+Person Memories Portrait	DELETE , GET	The person memories portrait.
+Beta Person Memory Reference	DELETE	A reference from a Tree person to a memories persona.
+Person Merge	GET , OPTIONS , POST	A person merge.
+Person Not A Match	DELETE	A declaration that a person is not a match of another person.
+Person Not A Match List	DELETE , GET , POST	The list of persons that are declared to be not a match with a particular person.
+Person Note	DELETE , GET , POST	A note on a person.
+Person Notes	GET , POST	The set of notes attached to a person.
+Person Portraits	GET , POST	The person portraits.
+Person Restore	POST	Action to restore a person.
+Person Source Reference	DELETE	A source reference for a person.
+Person Sources Query	GET	A query for all sources for a person.
+Persons	GET , POST	The set of persons in the FamilySearch Family Tree.
+Preferred Parent Relationship	DELETE , GET , PUT	A preferred parent relationship for a person.
+Preferred Spouse Relationship	DELETE , GET , PUT	A preferred relationship for a person.
+Spouses of a Person	GET	The set of spouses for a person.
+Places
+Place	GET	A place.
+Place Attributes	GET	The attributes of a place.
+Place Description	GET	A description of a place.
+Place Description Children	GET	The children of a place.
+Place Descriptions	GET	A set of place descriptions.
+Place Descriptions Group	GET	A place descriptions group.
+Place Type	GET	A place type.
+Place Type Group	GET	A place type group.
+Place Type Groups	GET	The list of place type groups.
+Place Types	GET	The list of place types.
+Places Search	GET	A list of places matching search criteria.
+Records
+No resources are available.
+
+Search and Match
+Match by Tree Person Id	GET , HEAD , POST	The matches for a Family Tree person.
+Person Matches by Example	POST	Get tree persons that match the given criteria.
+Person Not A Match	DELETE	A declaration that a person is not a match of another person.
+Person Not A Match List	DELETE , GET , POST	The list of persons that are declared to be not a match with a particular person.
+Tree Person Search	GET	A search query for tree persons.
+Sources
+Source Description	DELETE , GET , HEAD , POST	A source description
+Source Descriptions	GET , POST	The set of source descriptions in the application.
+Source Folder	DELETE , GET , POST	A source folder.
+Source Folder Source Descriptions	GET , POST	The (paged) list of of source descriptions in a specific source folder.
+Source Folders	GET , POST	The set of all source folders in the system.
+Source References Query	GET	A set of persons and relationships which reference the given source description.
+User Source Descriptions	DELETE , GET	The (paged) list of of all source descriptions provided by a specific user.
+User Source Folders	GET	The list of all source folders provided by a specific user.
+Spouses
+Couple Relationship	DELETE , GET , HEAD , POST	A couple relationship
+Couple Relationship Change History	GET , HEAD	The change history of a couple relationship.
+Couple Relationship Conclusion	DELETE	A single fact on a couple relationship.
+Couple Relationship Note	DELETE , GET , POST	A note on a couple relationship.
+Couple Relationship Notes	GET , POST	The set of notes attached to a relationship.
+Couple Relationship Restore	POST	Action to restore a couple relationship.
+Couple Relationship Source Reference	DELETE	A source reference for a couple relationship.
+Couple Relationship Source References	GET , POST	A set of source references on a couple relationship.
+Couple Relationship Sources Query	GET	A query for all sources for a couple relationship.
+Couple Relationship Spouses Ordering	POST	A couple relationship spouses ordering.
+Relationships	POST	The set of relationships in the application.
+Trees
+No resources are available.
+
+User
+Agent	GET	An agent, such as a user or other contributor.
+Current Tree Person	GET	The query for the tree person that represents the current user.
+Current User	GET	The current user.
+Utilities
+Pending Modifications	GET	The set of pending modifications currently defined for the FamilySearch API.
+Vocabularies
+Controlled Vocabulary List	GET	A list of controlled vocabulary elements.
+Controlled Vocabulary Term	GET	controlled vocabulary term
+Other
+Tree Person Reference		A single tree-person-reference on a person.
+Prototype Tree Matches		List of Matches.
+
+
+
+---------------
+
+Compatibility Checklist
+General
+General minimum capabilities applies to all apps that access FamilySearch resources.
+The following checkbox items will be reviewed for any solution to obtain Compatible status.
+
+Requirements for All Apps
+[ ] Apply to become a Solutions Provider
+
+[ ] Obtain acceptance in the Solutions Program
+
+[ ] Required use of Compatible Logo
+
+Authentication Compatibility
+Authentication compatible applies to all solutions that access FamilySearch resources.
+
+The following checkbox items will be reviewed for your solution to obtain Authentication Compatible.
+
+Minimum Capabilities
+[ ] Each user must obtain a FamilySearch access token in order to read or write to the Family Tree.
+
+[ ] Access tokens must be protected. If a user access token is passed to a web browser in a cookie, that cookie must be a secure cookie. All cookies that give a user the ability to use an access token must also be secure cookies.
+
+[ ] Network traffic is encrypted with SSL from the end user to the FamilySearch API.
+
+[ ] User authentication is completed by directly calling the FamilySearch Third-Party User Authentication web page using OAuth 2 as specified by the Identity documentation as follows.
+
+[   ] No storage of FamilySearch usernames or passwords is permitted with web solutions.
+[   ] FamilySearch Person ID numbers can be stored by the solution.
+[   ] The FamilySearch session cookie must be a secure cookie.
+[   ] No permanent storage of FamilySearch API Session ID is permitted.
+[ ] Refresh tokens can be used for selected confidential clients as determined case by case. This capability is implemented through the use of a service account.
+[ ] Have a documented security policy, which is periodically reviewed, is approved by management, and is communicated to all employees.
+
+Desktop and Mobile Solution Minimum Capabilities
+[ ] An embedded web browser can be used to call the FamilySearch Third-Party User Authentication web page if the URL being called is clearly visible.
+
+Read Compatibility
+Read compatible applies to applications that access FamilySearch resources in order to analyze, visualize, share, and publish the information. This includes reading information about persons, relationships, memories, photos, stories, documents, sources, discussions, and change history.
+
+The following checkbox items will be reviewed for your solution to obtain Read Compatibile status.
+
+[ ] Authentication Compatible
+
+[ ] Demonstrate proper implementation of one or more of the following types of read operations.
+
+Important! Each type of read operation listed below must be reviewed independently. Read compatibility for one type of read operation does not qualify your app for any other type of read operation.
+
+Read Changes
+Read Discussions
+Read Genealogies (prototype)
+Read Hints
+Read Memories (by person, by user, personas, comments)
+Read Person (details, pedigree, portraits, or search)
+Read Places
+Read Sources (by user, or by person)
+Read User
+[ ] Demonstrate proper handling of cache. If the data you read is cached, do not store it in local memory, purge the cache if the back button is used and at the end of your user session.
+
+[ ] Abide by the Data Security Practices specified in the Data Management section of the Compatibility Overview.
+
+Record Hinting Compatibility
+Record Hinting helps users find sources and evidence that can be added to FamilySearch Family Tree to substantiate conclusions. Record Hinting applications can read persons, request hints, and redirect users to FamilySearch in order to examine possible matches and attach records that support conclusions.
+
+The user must be directed to FamilySearch to analyze and attach possible matches because third-party applications do not have adequate access privileges to the FamilySearch historical records collection. This is primarily due to legal issues on what data third-party applications are allowed to show versus what FamilySearch is allowed to show. Therefore, FamilySearch.org provides pages that present the detailed information of the hinted possible matches to the user.
+
+The following checkbox items will be reviewwed for your solution to obtain Record Hinting Compatible status.
+
+[ ] Authentication Compatible
+
+[ ] Read Compatible
+
+[ ] Use the Person Match FamilySearch API resource to retrieve from FamilySearch or another collection a summary of hints of possible record matches for a Person ID. The application can show the summary and ratings of the possible matches but no additional information is provided by this API resource.
+
+[ ] Provide a User Interface flow substantially similar to that shown in the Record Hinting document.
+
+The redirect to FamilySearch can open in the existing browser window, a new browser window, or a new browser tab.
+It is preferred that the solution redirects to the Possible Matches page. However, the solution can redirect to the Attach Historical Records to Family Tree page for analysis of a specific hinted record.
+Add Person Compatibility
+The FamilySearch Family Tree is essential to the purpose of FamilySearch. The growth and quality of the Family Tree are dependent on proper engagement of users. Tools, resources, and services must operate consistently and follow good practices in order to facilitate progressive contributions. Applications should encourage conformance to standards before, during, and after viewing, adding, or editing the Family Tree. All contributions should be supported by proper evidence and linked to online images of the source if possible.
+
+A single new person or group of new persons must be added to the FamilySearch Family Tree with a relationship to someone who is already in Family Tree. Supply each new person's name, gender, birth date, birth place, christening, death date, or living flag, and if applicable death place, burial date, and burial place.
+
+The following checkbox items will be reviewed for your solution to obtain Person Add Compatible status.
+
+[ ] Read Compatible
+
+[ ] Sources Write Compatible for create and attach sources
+
+[ ] Search for Matches returns no possible duplicates
+
+NOTE: If possible duplicates are found, you must perform merge and not-a-match maintenance. You may optionally redirect users to the FamilySearch Possible Duplicates page to handle merging and not-a-match maintenance.
+
+[ ] The user can add a Person as a Spouse, Parent, or Child and can add sources
+
+[ ] Event information is standardized
+
+Smart Person Additions Compatible Checklist
+Smart Person Additions is a feature that helps build the Family Tree by assisting users in selecting, qualifying, and adding people to the Family Tree. New people can be added to the FamilySearch Family Tree if they are related to someone who is either already in the Family Tree or is to be added to the Family Tree. People should be added only if it is programmatically determined that they are not already in the Family Tree.
+
+When adding a person, supply the new person's name, gender, birth date, birth place, christening, death date, or living flag, and if applicable death place, burial date, and burial place.
+
+The following checkbox items will be reviewed for a solution to obtain Smart Person Additions compatibility.
+
+[ ] Read Compatible
+
+[ ] Identify the people in the list who are related to someone in the FamilySearch Family Tree or to someone who is being added to the FamilySearch Family Tree.
+
+[ ] Identify the people in the list who are already in the FamilySearch Family Tree.
+
+Note: Each search for person matches should include the following parameters:
+
+First and Last Name
+Related Person(s)
+Gender (default is provided if adding a spouse)
+Date and Place of a vital event (birth, christening, marriage, death, or burial)
+[ ] Generate a list of potential people to add to the FamilySearch Family Tree.
+[ ] Allow the user to select people in the list to be added to the FamilySearch Family Tree.
+
+Note: Do not allow people to be selected if they are already in the FamilySearch Family Tree or if they are not related to someone in the Family Tree.
+
+[ ] Add the selected people to the FamilySearch Family Tree as a Spouse, Parent, or Child.
+
+[ ] Link each newly added FamilySearch Family Tree person with the partner app person by saving the FamilySearch Family Tree Person ID with the app person data.
+
+Plug-ins can also be used to customize web pages. Intelligent insertion of HTML and JavaScript code into specific website pages can be used by plug-ins to add different functionality or customize the rendition of those pages. This document explains how plug-ins can add features to the FamilySearch web application. These custom features may add new functionality and change the look of the FamilySearch web application.
+
+Complimentary Plug-ins
+Plug-ins that add value for FamilySearch.org customers and are friendly to FamilySearch are considered complimentary. The following are guidelines for creating and deploying plug-ins that are complimentary.
+
+The installation and use of the plug-in should clearly communicate the product function and company name.
+Isolate the launching and use of the third-party plug-in from FamilySearch navigation, buttons, and links. There should be no confusion about when the user is using FamilySearch features and when the user is using the third-party plug-in features.
+If the plug-in temporarily captures, analyzes, and presents data from FamilySearch, the user must first be informed and agree to allow the plug-in to use FamilySearch data.
+Temporarily stored FamilySearch data should be eliminated when the browser is closed.
+The plug-in should be “read-only”.
+If the plug-in redirects to a FamilySearch page by opening a browser window or tab, before redirection the plug-in should inform the user of what is going to happen and explain any responsibility the user has for the results obtained. For example, the plug-in should inform the user it will check for duplicates before acting on possible ordinance opportunities.
+Obtain and properly use a FamilySearch Campaign ID (CID) when calling a FamilySearch page (See “Linking to FamilySearch Pages” from your plug-in. Only use the CID assigned by FamilySearch for you specific plug-in.
+Compromising Plug-ins
+Plug-ins that do not add value for FamilySearch.org customers and are unfriendly to FamilySearch are considered compromising. The following are items to avoid in implementing and deploying plug-ins.
+
+The plug-in creates greater potential for security problems.
+User privacy could be compromised.
+FamilySearch data is usable by someone other than the authenticated user browsing FamilySearch.org.
+The added third-party features appear to be FamilySearch features.
+The plug-in is intentionally working around messaging and process requirements of the FamilySearch web application.
+The plug-in performs “screen-pushing” enabling writing to FamilySearch.org.
+Preliminary Compatible Checklist
+FamilySearch will not certify or reference plug-ins that do not use the FamilySearch API. The following is a simple list for plug-ins to be considered as compatible.
+
+[ ] FamilySearch finds that the plug-in is complimentary and not compromising.
+
+[ ] The plug-in launches a separate application that reads or writes to the FamilySearch API.
+
+[ ] The plug-in does not insert any HTML or JavaScript code into FamilySearch web pages.
+
+[ ] The developer intends to work with FamilySearch to improve FamilySearch features for users.
+
+Tree Write Compatibility
+The FamilySearch Family Tree is essential to the purpose of FamilySearch. The growth and quality of the Family Tree are dependent on proper engagement of users. Tools, resources, and services must operate consistently and follow good practices in order to facilitate progressive contributions. Solutions should encourage conformance to standards before, during, and after viewing, adding, or editing the Family Tree. All contributions should be supported by proper evidence and linked to online images of the source if possible.
+
+Tree Write compatible solutions write conclusions and make updates to the Family Tree so they must implement the principles of a source centric model in programming and user interface.
+
+The following checkbox items are minimum capabilities for your solution to obtain Tree Write Compatible status.
+
+[ ] Add Person Compatible
+
+[ ] Sources Write Compatible
+
+[ ] Event information is standardized using normalized values from FamilySearch or the company's place authority.
+
+[ ] Modify a Person in FamilySearch
+
+[ ] Delete a Person or prevent deletion of Persons on FamilySearch
+
+[ ] Person Compare and Transfer of Solution Data with FamilySearch Data
+
+[ ] Change History and Person Restore or Redirect Users to the FamilySearch Change History ARK Page for changes and restores.
+
+[ ] Delete and add Spousal Relationships in FamilySearch
+
+[ ] Add, change, and delete Parent-Child Relationships in FamilySearch
+
+[ ] Merge Persons and Perform Not-a-Match Maintenance, or Redirect Users to the FamilySearch Possible Duplicates ARK Page for merges and not-a-match maintenance
+
+NOTE: Merging must provide the ability to reconcile sources for the person being merged in addition to comparing vital, family, and other information.
+
+Options
+Add, Change, or Delete Person Notes in Family Tree
+Restore Merged Persons in Family Tree
+Comparisons of companyM and FamilySearch data may include notes and life sketches
+Notify of Person Changes and Other Activities
+Linking Compatible
+Sources Write Compatibility
+Sources Write solutions give users the following capabilities.
+
+Create new sources
+Attach Sources to Persons
+Update Sources (Edit, Delete, Detach and Compare)
+The following features will be reviewed for your solution to obtain each of the three Source Write compatible statuses
+[ ] Read Compatible
+
+[ ] Create Source
+
+Using the Sources API Resource create sources for persons
+OR
+Redirect to the Create and Attach Source destination page.
+
+[ ] When creating a source, give the user the option to enter the following information. Only the Title is required for the source to be saved.
+
+Title (required)
+URL
+Citation
+Notes
+Attach Sources Compatible
+[ ] Create Sources Compatible
+
+Using the Sources API Resource attach sources for persons
+OR
+Redirect to the Create and Attach Source destination page.
+
+[ ] When attaching a source to a person, allow the user the following options.
+
+Enter search parameters or person ID to find and select the person to attach sources to.
+View the person Name, person ID, birth date, birthplace, death date, death place, parents names, and spouses names if available in the results of the search.
+Set event tags such as name, gender, birth, christening, death, and burial for the source.
+Enter a reason that the source is valid. Reasons are not to be used to promote the partner or partner products.
+[ ] User Interface Requirements are to make interfaces substantially similar to the following:
+
+Search for Family Tree persons ID
+Associate a Person or Artifact in a Third-Party Application with a Person in FamilySearch Family Tree
+Read and View Sources Contributed by the Authenticated User
+View Sources through FamilySearch Family Tree Person Page
+Create a Source
+Attach an Existing Source to a Person
+Update Source Compatible
+[ ] Attach Sources Compatible
+
+[ ] Edit Sources including:
+
+Tree Write Compatible or message on how to avoid duplicate sources
+[ ] Detach Sources or message the proper redirect to FamilySearch.org for detaching sources
+[ ] Delete Sources or message the proper redirect to FamilySearch.or for deleting sources
+
+[ ] Tree Write Compatible plus:
+
+Compare Sources
+Mechanisms in place to prevent duplication and preserve data integrity
+Prevent duplication of a Source on the same partner-FT connected Persons - The Partner tracks the SrcID while on this Partner person. The partner app should capture the SrcID when they copy an FT Source or Create a Source
+Preserve the Source data integrity - Capture Source conclusions and SrcRef Reason and tags.
+Maintain connected Person/Source integrity - So before a partner user can edit a Source that came from FT on that connected Person, the user must see the current FT Source values.
+When a Partner creates a new FT Person - any Sources created are attached to that FT Person. Those Sources have no dup issues on a new Person.
+At the point of connecting Person between FT and Partner (not from an Add Person workflow) no Sources flow across to FT. The user can push-pull to attach specific Sources. A connected Person that has a subsequent Source attached/detached on the FT side may or may not show up as the Partner Person side.
+Options
+If you pre-populate the reason, make users aware of where and how to explain a reason if they decide to change it.
+Create, access, and manage source boxes.
+When Creating a Source for a previously created memory, enable the following:
+Search and view all memories that were contributed by the current user.
+Create a source using an uploaded photo or document by using the Memory module API resources.
+Allow the user to enter a source title, citation, and note by using the Source Descriptions API resources. See the Create Source Description example.
+Memories Write Compatibility
+Memories Write solution give users the following minimum capabilities:
+
+Upload new memories.
+Edit memories and create personas, comments, and sources.
+Delete and detach memories.
+The following features will be reviewed for your solution to obtain each of the three Memories Write compatible statuses.
+
+[ ] Authentication compatible.
+
+[ ] Users can upload memories (unattached or attached to a person).
+
+Using the Memories API Resource create memories for persons
+OR link to the Person ARK page with the memories context.
+
+[ ] The upload agreement initially must be displayed and accepted by the users. If a device being used to upload a memory does not have a web browsing console capable of displaying the upload agreement, one of the following options must be made available:
+
+Print a copy of the upload agreement if the device has printing capability.
+Post on the device a hard copy of the upload agreement.
+FamilySearch Content Submission Agreement (PDF)
+Edit Memories Compatible
+
+[ ] Read compatible using at least one Memories read API.
+
+[ ] Upload Memories certified.
+
+[ ] Edit the titles and descriptions of memories they created.
+
+[ ] Create personas of people in the tree on memories that they created.
+
+[ ] Create comments to memories.
+
+Option
+- Edit the story text of a story previously uploaded
+
+Delete Memories Compatible
+
+[ ] Edit Memories compatible.
+
+[ ] Delete memories that they created.
+
+[ ] Delete personas that they created (detach from a person in the tree).
+
+[ ] Delete memory comments.
+
+Options
+
+The following capabilities are not requirements, but you can include them:
+
+PDF upload.
+Audio upload.
+Create a source from a memory.
+File Formats
+FamilySearch.org accepts the following file formats or types (note that the maximum file size is 15 MB):
+
+Image: .bmp, .jpg, .png, .tiff
+PDF: .pdf
+Text: .txt
+Audio: .mp3, .m4a
+See Also
+Memories guide
+Memories API resources
+Person API resources for memories and portraits
+Programming examples for Memories
+Ordinance Read Compatibility
+Ordinance Read compliance applies to applications that analyze FamilySearch person information in order to prepare for temple ordinance work. This includes reading information about persons, relationships, memories, photos, stories, documents, sources, discussions, and change history.
+
+In addition to your partner status, you must sign a special addendum in order to acquire access to the FamilySearch Ordinance endpoints.
+
+Please Note: As of June 27, 2017, FamilySearch is suspending the compatibility and approval of new applications that provide functionality for scanning, capturing or reporting (or any combination of the three) ordinance information, including those that are or may be available to take to the temple. As we evaluate the impact of these types of applications on the FamilySearch systems and the end-user experience; this suspension will remain in effect until further notice. Solutions that request limited read-access privileges may be considered based upon need and functionality. If you have any questions, please email devsupport@familysearch.org.
+
+The following checkbox items will be reviewed for your solution to obtain Ordinance Read Compatibility.
+
+[ ] Read Compatible
+
+[ ] Tree Write Compatible (effective June 27, 2017)
+
+[ ] Ordinance Addendum Signed and Approved
+
+[ ] Pricing free for standalone ordinances apps OR no additional charge for apps to include ordinance features.
+
+[ ] Have an FamilySearch account for Latter-day Saints
+
+[ ] Use Standardized Ordinance Icons and Statuses
+
+[ ] Read Person(s) Ordinances
+
+Read ordinances on an individual
+OR
+Identify Persons Needing Ordinances
+Crawl the tree to gather information and statuses about ancestors in order to identify ordinance opportunities.
+Page Redirect Option
+
+[ ] Display the following message at least the first time before redirecting the user to the FamilySearch Ordinance Page.
+
+“[your product name] is provided to help you with family history research. It is not a FamilySearch product. While it can help you find ancestors who need temple ordinances, it does not replace the research that verifies the accuracy of information and that makes sure the ordinances have not already been done. Please check the information you find for accuracy, attach relevant sources, and check for possible duplicates before you reserve ordinances.”
+
+Opportunity List
+Optionally you can provide an Opportunity List. Crawl the tree to analyze couples, parents, and children that can be submitted for ordinances with very little or no additional information. Show your results in an Opportunity List indicating the individuals who need ordinances and the actions required to add the names to the user's Temple Reservation List.
+
+Ordinance Write Compatible Checklist
+Ordinance Write compliance applies to applications that make temple ordinance reservations for persons in the FamilySearch database.
+
+In addition to your partner status, you must sign a special addendum in order to acquire access to the FamilySearch Ordinance endpoints.
+
+Please Note: As of June 27, 2017, FamilySearch is suspending the certification and approval of new applications that provide functionality for scanning, capturing or reporting (or any combination of the three) ordinance information, including those that are or may be available to take to the temple. As we evaluate the impact of these types of applications on the FamilySearch systems and the end-user experience; this suspension will remain in effect until further notice. Solutions that request limited read-access privileges may be considered based upon need and functionality. If you have any questions, please email devsupport@familysearch.org.
+
+The following checkbox items will be reviewed for your solution to obtain Ordinance Write Compatible status.
+
+[ ] Ordinance Read Compatible
+
+[ ] Check for Duplicate Person Records
+
+[ ] Prepare Persons for Submission
+
+[ ] Query and Display the Temple Policy
+
+[ ] Planning a Temple Visit Includes the Following
+
+Add persons to the Temple Reservation List.
+Select individuals and ordinances to be reserved.
+Display the Temple Reservation List showing at least the name, ordinances reserved, who the person needs to be sealed to (if applicable), and the date reserved.
+[ ] Use the standard Ordinance Reservation icons and statuses. The ordinance icon legend should be easily displayed from this page. The minimum actions that must be available are to Reserve, Unreserve, and Share.
+
+Printing Family Ordinance Requests (FORs) or Temple Cards
+Printing Family Ordinance Requests (FORs) or Temple Cards is an option you can provide. Enable your application to receive FORs or Temple Cards in PDF format from FamilySearch.org and launch Adobe Acrobat or other compatible reader. The application should also allow lost or destroyed requests or cards to be reprinted.
+
+Read Genealogies Compatibility
+The data submitted to FamilySearch Genealogies is separate from the data in FamilySearch Family Tree. With the exception of living persons, genealogies data will be publicly visible and searchable
+
+The following checkbox items will be reviewed for your solution to obtain Genealogies Read Compatible status.
+
+[ ] Authentication Compatible
+
+[ ] Read Genealogies Tree
+
+Options
+Find Person Matches
+Read Source Description
+Read a Person
+Read the Tree Contributor
+Read a Note
+Genealogies Write Compatibility
+Prototype: This resource is currently in a prototype development state. It may or may not be operational and the interface may change prior to release. Feedback is welcome.
+The simplest way to implement Genealogies is to give the user the ability to create a full tree by uploading A genealogy file that has been converted to the GEDCOMX format. Similarly the easiest way to update a tree is to replace it with a copy of a modified tree. There are options in the Genealogies Resource to actually create and maintain individual persons, facts, and relationships. Person level maintains has an extreme overhead in keeping the person data in the solution in sync with the person data in Genealogies. Genealogies Write solutions give users the following minimum capabilities.
+
+The following features will be reviewed for your solution to obtain Genealogies Write compatible status.
+
+Genealogies Tree Compatibility
+[ ] Authenticate Compatible
+
+[ ] Upload Genealogies Tree
+
+[ ] Read Genealogies Tree
+
+[ ] Replace Genealogies Tree
+
+[ ] Delete Genealogies Tree
+
+Bulk File Feed Compatibility
+Bulk File Feed (BFF) Compatible applies to partners who have signed an agreement permitting them to keep and access their own copy of FamilySearch Family Tree data of deceased persons.
+
+The BFF API is used to facilitate efficient and accurate maintenance of the partner’s copy of FamilySearch Family Tree data. Using the BFF API helps track bulk downloads allowing the update and maintenance process to occur in multiple sessions.
+
+The following items will be reviewed for your solution to obtain BFF Compatible status.
+
+[   ] A legal document giving the partner permission from FamilySearch to obtain a copy of the FamilySearch Family Tree data and offer it to their users.
+
+[   ] Completion of BFF API orientation Training.
+
+[   ] Successful authentication using service account private key.
+
+[   ] Industry standards applied for keeping private key secure.
+
+[   ] Use the BFF API for an initial download.
+
+[   ] Use the BFF API to syncrhonize with FamilySearch Family Tree data.
+
+[   ] Proper usage of Logo and Branding for FamilySearch Family Tree data
+
+[   ] Use the BFF API to update the data at least every 24 hours.
+
+Bulk Record Broker Compatibility
+Bulk Record Broker (BRB) Compatible applies to partners who have signed an agreement permitting them to keep and access their own copy of FamilySearch historical records.
+
+The BRB API is used to facilitate efficient and accurate maintenance of the company’s copy of FamilySearch historical records. Using the BRB API helps track bulk downloads allowing the update and maintenance process to occur in multiple sessions.
+
+The following items will be reviewed for your solution to obtain BRB Compatible status.
+
+[   ] A legal document giving the partner permission from FamilySearch to obtain access to specific designated record collections and offer it to their users.
+
+[   ] Received orientation training on the use of the BRB API.
+
+[   ] Successful authentication using service account private key.
+
+[   ] Industry standards applied for keeping private key secure.
+
+[   ] Use the BRB API for an initial download.
+
+[   ] Use the BRB API to stay up to date with the Bulk Record Broker periodically after the original download is confirmed.
+
+[   ] Proper usage of Logo and Branding for FamilySearch records when presented to users.
+
+Discussion Write Compatibility
+Discussion Write compliant applications can list, create, update, and delete discussions and related comments.
+
+The following items will be reviewed for the solution to become Discussion Write Compatible.
+
+[   ] Read Compatible
+
+[   ] Use the Discussions API resource to list, create, update, and delete discussions.
+
+[   ] Use the Discussions API resource to add, update, and delete comments.
+
+[   ] Use the Person Discussion References API resource to add, update, and delete association of a discussion with a person.
+
+[   ] Allow users to list discussions and comments in dialog form and to edit and delete them in a substantially similar way as found in the FamilySearch user interface.
+
+[   ] Allow users to comment on a post.
+
+Multi-Language Compatibility
+The following items will be reviewed for your solution to become Multi-Language Compatible.
+
+[   ] The application supports Unicode (such as UTF-8 and UTF-16)
+
+[   ] A configurable setup for the user interface is provided
+
+[   ] Complete messaging for multiple languages. The user interface, messaging, and help translations can be:
+
+Created by developers or users.
+Integrated and distributed by the application.
+Easily installed by user.
+Browser Plug-in Compatibility
+The popular Internet browsers such as Chrome, Explorer, Firefox, and Safari, support plug-ins that are sometimes called extensions or add-ons. Common examples are plug-ins that add features such as search-engines, virus scanners, or the ability to utilize a new file type.
+
+Plug-ins can also be used to customize web pages. Intelligent insertion of HTML and JavaScript code into specific website pages can be used by plug-ins to add different functionality or customize the rendition of those pages. This document explains how plug-ins can add features to the FamilySearch web application. These custom features may add new functionality and change the look of the FamilySearch web application.
+
+Complimentary Plug-ins
+Plug-ins that add value for FamilySearch.org customers and are friendly to FamilySearch are considered complimentary. The following are guidelines for creating and deploying plug-ins that are complimentary.
+
+The installation and use of the plug-in should clearly communicate the product function and company name.
+Isolate the launching and use of the third-party plug-in from FamilySearch navigation, buttons, and links. There should be no confusion about when the user is using FamilySearch features and when the user is using the third-party plug-in features.
+If the plug-in temporarily captures, analyzes, and presents data from FamilySearch, the user must first be informed and agree to allow the plug-in to use FamilySearch data.
+Temporarily stored FamilySearch data should be eliminated when the browser is closed.
+The plug-in should be “read-only”.
+If the plug-in redirects to a FamilySearch page by opening a browser window or tab, before redirection the plug-in should inform the user of what is going to happen and explain any responsibility the user has for the results obtained. For example, the plug-in should inform the user it will check for duplicates before acting on possible ordinance opportunities.
+Obtain and properly use a FamilySearch Campaign ID (CID) when calling a FamilySearch page (See Linking to FamilySearch Pages) from your plug-in. Only use the CID assigned by FamilySearch for you specific plug-in.
+Compromising Plug-ins
+Plug-ins that do not add value for FamilySearch.org customers and are unfriendly to FamilySearch are considered compromising. The following are items to avoid in implementing and deploying plug-ins.
+
+The plug-in creates greater potential for security problems.
+User privacy could be compromised.
+FamilySearch data is usable by someone other than the authenticated user browsing FamilySearch.org.
+The added third-party features appear to be FamilySearch features.
+The plug-in is intentionally working around messaging and process requirements of the FamilySearch web application.
+The plug-in performs “screen-pushing” enabling writing to FamilySearch.org.
+Plug-in Compatible Checklist
+FamilySearch will not certify or reference plug-ins that do not use the FamilySearch API. The following is a simple list for plug-ins to be considered as compatible.
+
+[   ] FamilySearch finds that the plug-in is complimentary and not compromising.
+
+[   ] The plug-in launches a separate application that reads or writes to the FamilySearch API.
+
+[   ] The plug-in does not insert any HTML or JavaScript code into FamilySearch web pages.
+
+[   ] The developer intends to work with FamilySearch to improve FamilySearch features for users.
+
+Linking Compatility
+Solution Providers can connect features of FamilySearch to their app by directing users to an appropriate FamilySearch web page. Helpful information can be found in the guide for Linking to FamilySearch Pages and the guide for the Source Create Page.
+
+The following items are required in order for your app to obtain Redirecting Feature Certification.
+
+[   ] Read or Write Compatible
+
+[   ] Follow FamilySearch Trademark and Logo Guidelines
+
+[   ] Appropriate message is dislayed to user before redirecting to the target page (required only for solutions that write to Family Tree)
+
+[   ] Acknowledge that FamilySearch only supports linking to pages as outlined in the Linking to FamilySearch guide. All other linking methods may break at any time without notice.
+
+Framing Restrictions
+Your solution should not displays FamilySearch.org page content within a frame or iframe.
+
