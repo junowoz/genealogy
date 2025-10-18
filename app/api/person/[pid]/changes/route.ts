@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { FamilySearchChangeAdapter } from '../../../../../src/adapters/familysearch/changeAdapter';
 import { FamilySearchAuthError } from '../../../../../src/lib/familysearch/client';
 
-export async function GET(req: Request, { params }: { params: { pid: string } }) {
-  const pid = params.pid;
+export async function GET(req: Request, ctx: any) {
+  const pid: string = ctx?.params?.pid;
   const url = new URL(req.url);
   const cursor = url.searchParams.get('cursor') ?? undefined;
 

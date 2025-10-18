@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 export default function LinkedPage() {
-  const searchParams = useSearchParams();
-  const state = searchParams.get('state') ?? 'web';
+  const sp = useSearchParams();
+  const state = sp?.get('state') ?? 'web';
 
   useEffect(() => {
     const timer = setTimeout(() => {

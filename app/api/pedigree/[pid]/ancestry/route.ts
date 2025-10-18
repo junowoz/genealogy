@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { FamilySearchPedigreeAdapter } from '../../../../../src/adapters/familysearch/pedigreeAdapter';
 import { FamilySearchAuthError } from '../../../../../src/lib/familysearch/client';
 
-export async function GET(req: Request, { params }: { params: { pid: string } }) {
-  const pid = params.pid;
+export async function GET(req: Request, ctx: any) {
+  const pid: string = ctx?.params?.pid;
   const url = new URL(req.url);
   const generations = Number.parseInt(url.searchParams.get('generations') ?? '4', 10);
 

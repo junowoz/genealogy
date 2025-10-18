@@ -43,7 +43,7 @@ export async function getMcpAuth(sessionId: string): Promise<FamilySearchAuthSta
   const auth: FamilySearchAuthState = {
     accessToken: row.accessToken,
     refreshToken: row.refreshToken ?? undefined,
-    scope: row.scope ?? undefined,
+    scope: row.scope ?? '',
     tokenType: row.tokenType,
     expiresAt: row.expiresAt.getTime(),
     personId: row.personId ?? undefined,

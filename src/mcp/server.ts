@@ -423,7 +423,7 @@ async function resolveClientForSession(sessionId?: string) {
       "Sessão sem identificador de MCP."
     );
   }
-  const auth = getMcpAuth(sessionId);
+  const auth = await getMcpAuth(sessionId);
   if (!auth) {
     throw new FamilySearchAuthError(
       "not_linked",

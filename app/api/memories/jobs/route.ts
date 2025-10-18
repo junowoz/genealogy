@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import path from 'path';
 import { writeFileSafe } from '../../../../src/utils/fs';
 
 export const runtime = 'nodejs';
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const uploadId: string | undefined = body?.uploadId;
   if (!uploadId) return NextResponse.json({ error: 'uploadId é obrigatório' }, { status: 400 });
@@ -27,4 +27,3 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   return NextResponse.json({ message: 'Use /api/memories/jobs/[id] para status. Listagem não implementada nos mocks.' });
 }
-

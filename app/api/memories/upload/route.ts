@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { randomUUID, createHash } from 'crypto';
 import path from 'path';
 import { writeFileSafe } from '../../../../src/utils/fs';
 
 export const runtime = 'nodejs';
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   const form = await req.formData();
   const file = form.get('file');
   if (!(file instanceof File)) {
@@ -33,4 +33,3 @@ export async function POST(req: NextRequest) {
     },
   });
 }
-
