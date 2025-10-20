@@ -1,15 +1,21 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  FS_ENV: z.enum(['beta', 'prod']).default('beta'),
-  FS_APP_KEY: z.string().min(1, 'FS_APP_KEY is required'),
-  FS_REDIRECT_URI: z.string().url('FS_REDIRECT_URI must be a valid URL'),
+  NODE_ENV: z
+    .enum(["development", "test", "production"])
+    .default("development"),
+  FS_ENV: z.enum(["beta", "prod"]).default("beta"),
+  FS_APP_KEY: z.string().min(1, "FS_APP_KEY is required"),
+  FS_REDIRECT_URI: z.string().url("FS_REDIRECT_URI must be a valid URL"),
   FS_AUTH_BASE_URL: z.string().url().optional(),
   FS_API_BASE_URL: z.string().url().optional(),
   FS_OAUTH_SCOPE: z.string().optional(),
-  SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters long'),
-  NEXT_PUBLIC_APP_ORIGIN: z.string().url('NEXT_PUBLIC_APP_ORIGIN must be a valid URL'),
+  SESSION_SECRET: z
+    .string()
+    .min(32, "SESSION_SECRET must be at least 32 characters long"),
+  NEXT_PUBLIC_APP_ORIGIN: z
+    .string()
+    .url("NEXT_PUBLIC_APP_ORIGIN must be a valid URL"),
 });
 
 const parsed = envSchema.safeParse({
@@ -25,21 +31,24 @@ const parsed = envSchema.safeParse({
 });
 
 if (!parsed.success) {
-  const issues = parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ');
+  const issues = parsed.error.issues
+    .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+    .join("; ");
   throw new Error(`Invalid environment configuration: ${issues}`);
 }
 
-const defaults = parsed.data.FS_ENV === 'prod'
-  ? {
-      authBaseUrl: 'https://ident.familysearch.org/cis-web/oauth2/v3',
-      apiBaseUrl: 'https://api.familysearch.org',
-    }
-  : {
-      authBaseUrl: 'https://identbeta.familysearch.org/cis-web/oauth2/v3',
-      apiBaseUrl: 'https://api-integ.familysearch.org',
-    };
+const defaults =
+  parsed.data.FS_ENV === "prod"
+    ? {
+        authBaseUrl: "https://ident.familysearch.org/cis-web/oauth2/v3",
+        apiBaseUrl: "https://api.familysearch.org",
+      }
+    : {
+        authBaseUrl: "https://identbeta.familysearch.org/cis-web/oauth2/v3",
+        apiBaseUrl: "https://api-integ.familysearch.org",
+      };
 
-const scopeDefault = 'openid profile https://api.familysearch.org/auth/familytree.read';
+const scopeDefault = "https://api.familysearch.org/auth/familytree.read";
 
 export const env = {
   ...parsed.data,
