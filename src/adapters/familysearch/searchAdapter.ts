@@ -75,13 +75,15 @@ function buildSearchQuery(params: SearchParams) {
   const search = new URLSearchParams();
   search.set("count", "20");
   const { givenName, surname } = splitName(params.name);
-  if (givenName) search.set("givenName", givenName);
-  if (surname) search.set("surname", surname);
-  if (!givenName && !surname) {
-    search.set("name", params.name);
+  
+  // Use givenName/surname OU name, nunca ambos
+  if (givenName || surname) {
+    if (givenName) search.set("givenName", givenName);
+    if (surname) search.set("surname", surname);
   } else {
     search.set("name", params.name);
   }
+  
   if (params.birthYearFrom && params.birthYearTo) {
     search.set("birthDate", `${params.birthYearFrom}-${params.birthYearTo}`);
   } else if (params.birthYearFrom) {
