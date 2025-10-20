@@ -95,16 +95,44 @@ export async function refreshAccessToken(refreshToken: string) {
 export async function fetchCurrentUser(
   accessToken: string
 ): Promise<CurrentUserProfile | undefined> {
-  console.log("[fetchCurrentUser] Starting fetch");
+  console.log("[fetchCurrentUser] Starting fetch for current tree person");
+
+  // Use the correct endpoint to get current user's person ID
   const res = await fetch(
-    `${env.FS_API_BASE_URL.replace(/\/+$/, "")}/platform/users/current`,
+    `${env.FS_API_BASE_URL.replace(/\/+$/, "")}/platform/tree/current-person`,
     {
       headers: buildHeaders(accessToken),
       cache: "no-store",
+      redirect: "manual", // Don't follow redirects automatically
     }
   );
 
   console.log("[fetchCurrentUser] Response status:", res.status);
+
+  // The API returns 303 with Location header containing the person URL
+  if (res.status === 303) {
+    const location = res.headers.get("Location");
+    console.log("[fetchCurrentUser] Redirect location:", location);
+
+    if (location) {
+      // Extract person ID from URL like: /platform/tree/persons/XXXX-XXX
+      const personId = location.split("/").filter(Boolean).pop();
+      console.log("[fetchCurrentUser] Extracted personId:", personId);
+
+      if (personId) {
+        return {
+          personId,
+          id: undefined,
+          displayName: undefined,
+          contactName: undefined,
+          email: undefined,
+        };
+      }
+    }
+
+    console.warn("[fetchCurrentUser] No person ID found in Location header");
+    return undefined;
+  }
 
   if (res.status === 401) {
     console.warn("[fetchCurrentUser] Unauthorized (401)");
@@ -119,62 +147,39 @@ export async function fetchCurrentUser(
       body: text,
     });
     throw new Error(
-      `Failed to load FamilySearch profile: ${res.status} ${res.statusText} — ${text}`
+      `Failed to load FamilySearch current person: ${res.status} ${res.statusText} — ${text}`
     );
   }
 
-  const payload = await res.json();
-  console.log("[fetchCurrentUser] Payload received:", {
-    hasUsers: Array.isArray(payload?.users),
-    usersCount: Array.isArray(payload?.users) ? payload.users.length : 0,
-    payloadKeys: Object.keys(payload || {}),
-  });
+  // If we get here, try to parse as JSON (some responses might be 200 OK)
+  try {
+    const payload = await res.json();
+    console.log("[fetchCurrentUser] Payload received:", payload);
 
-  const user =
-    Array.isArray(payload?.users) && payload.users.length
-      ? payload.users[0]
-      : undefined;
+    // Try to extract person ID from various possible structures
+    const personId =
+      payload?.persons?.[0]?.id ?? payload?.person?.id ?? payload?.id;
 
-  if (!user) {
-    console.warn("[fetchCurrentUser] No user found in payload");
-    return undefined;
+    if (personId) {
+      console.log(
+        "[fetchCurrentUser] Extracted personId from payload:",
+        personId
+      );
+      return {
+        personId,
+        id: undefined,
+        displayName: undefined,
+        contactName: undefined,
+        email: undefined,
+      };
+    }
+  } catch (err) {
+    console.error("[fetchCurrentUser] Failed to parse response as JSON:", err);
   }
 
-  console.log("[fetchCurrentUser] User object:", {
-    hasId: !!user.id,
-    hasUserId: !!user.userId,
-    hasLinks: !!user.links,
-    linksKeys: user.links ? Object.keys(user.links) : [],
-    personLink: user?.links?.person?.href,
-    treeLink: user?.links?.tree?.href,
-  });
-
-  const personLink: string | undefined =
-    user?.links?.person?.href ??
-    user?.links?.tree?.href ??
-    user?.links?.Person?.href ??
-    undefined;
-
-  const personId = personLink
-    ? personLink.split("/").filter(Boolean).pop()
-    : undefined;
-
-  console.log("[fetchCurrentUser] Extracted personId:", personId);
-
-  const profile = {
-    id: user.id ?? user.userId ?? undefined,
-    displayName:
-      user.displayName ?? user.fullName ?? user.contactName ?? undefined,
-    contactName: user.contactName ?? undefined,
-    personId,
-    email: user.preferredEmail ?? user.email ?? undefined,
-  };
-
-  console.log("[fetchCurrentUser] Final profile:", profile);
-
-  return profile;
+  console.warn("[fetchCurrentUser] Could not extract person ID");
+  return undefined;
 }
-
 export class FamilySearchClient {
   private readonly baseUrl = env.FS_API_BASE_URL.replace(/\/+$/, "");
 
