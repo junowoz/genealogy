@@ -76,7 +76,7 @@ export default function RootLayout({
               <span className="hidden sm:inline">•</span>
               <a
                 className="underline decoration-dotted underline-offset-4"
-                href="https://www.familysearch.org/"
+                href="https://beta.familysearch.org/"
                 target="_blank"
                 rel="noreferrer"
               >

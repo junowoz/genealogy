@@ -74,7 +74,7 @@ def suggest_stub(ner: Dict[str, Any]) -> Dict[str, Any]:
                 "name": "John Doe",
                 "score": 0.86,
                 "explanations": ["Nome ✓", "Data ✓ (1861)", "Lugar ✓ (São Paulo)"] ,
-                "fsUrl": "https://www.familysearch.org/tree/person/details/K-123",
+                "fsUrl": "https://beta.familysearch.org/tree/person/details/K-123",
                 "fsPersonId": "K-123",
             }
         ]
@@ -103,4 +103,3 @@ def run_pipeline(file_path: str) -> Dict[str, Any]:
         **sug,
         **cit,
     }
-

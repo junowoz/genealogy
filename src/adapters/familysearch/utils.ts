@@ -1,12 +1,15 @@
-import type { Person, PersonRef, Place } from '../../domain/types';
+import type { Person, PersonRef, Place } from "../../domain/types";
 
-const GENDER_MAP: Record<string, Person['gender']> = {
-  male: 'Male',
-  female: 'Female',
-  unknown: 'Unknown',
+const GENDER_MAP: Record<string, Person["gender"]> = {
+  male: "Male",
+  female: "Female",
+  unknown: "Unknown",
 };
 
-export function mapGedcomPerson(raw: any, options: { placesById?: Map<string, Place> } = {}): Person | undefined {
+export function mapGedcomPerson(
+  raw: any,
+  options: { placesById?: Map<string, Place> } = {}
+): Person | undefined {
   if (!raw) return undefined;
   const id = raw.id ?? raw.identifier ?? extractIdentifier(raw.identifiers);
   if (!id) return undefined;
@@ -16,8 +19,8 @@ export function mapGedcomPerson(raw: any, options: { placesById?: Map<string, Pl
   const primaryName = display.name ?? getNameFromNames(names) ?? id;
   const gender = mapGender(display.gender ?? raw.gender?.type);
 
-  const birthFact = findFact(raw.facts, 'Birth');
-  const deathFact = findFact(raw.facts, 'Death');
+  const birthFact = findFact(raw.facts, "Birth");
+  const deathFact = findFact(raw.facts, "Death");
 
   const birthYear =
     extractYearFromFact(birthFact) ??
@@ -28,7 +31,8 @@ export function mapGedcomPerson(raw: any, options: { placesById?: Map<string, Pl
     extractYearFromString(display.deathDate) ??
     extractYearFromString(raw.deathDate);
 
-  const placeRef = birthFact?.place?.descriptionRef ?? birthFact?.place?.descriptionId;
+  const placeRef =
+    birthFact?.place?.descriptionRef ?? birthFact?.place?.descriptionId;
   const placeId = placeRef ? normalizeRef(placeRef) : undefined;
   const place = placeId ? options.placesById?.get(placeId) : undefined;
 
@@ -41,11 +45,9 @@ export function mapGedcomPerson(raw: any, options: { placesById?: Map<string, Pl
     birthFact?.place?.description ??
     undefined;
 
-  const fsUrl =
-    raw.links?.person?.href ??
-    raw.links?.tree?.href ??
-    raw.links?.source?.href ??
-    `https://www.familysearch.org/tree/person/details/${encodeURIComponent(id)}`;
+  const fsUrl = `https://beta.familysearch.org/tree/person/details/${encodeURIComponent(
+    id
+  )}`;
 
   const person: Person = {
     id,
@@ -56,8 +58,12 @@ export function mapGedcomPerson(raw: any, options: { placesById?: Map<string, Pl
     lifespan: display.lifespan ?? buildLifespan(birthYear, deathYear),
     primaryPlace: place,
     primaryPlaceText: birthPlaceText,
-    father: mapPersonRef(raw.display?.ancestorSummary?.father) ?? mapPersonRef(raw.father),
-    mother: mapPersonRef(raw.display?.ancestorSummary?.mother) ?? mapPersonRef(raw.mother),
+    father:
+      mapPersonRef(raw.display?.ancestorSummary?.father) ??
+      mapPersonRef(raw.father),
+    mother:
+      mapPersonRef(raw.display?.ancestorSummary?.mother) ??
+      mapPersonRef(raw.mother),
     spouse: mapPersonRef(raw.display?.spouse),
     fsUrl,
   };
@@ -67,7 +73,11 @@ export function mapGedcomPerson(raw: any, options: { placesById?: Map<string, Pl
 
 export function collectPlacesFromGedcom(gedcom: any): Map<string, Place> {
   const map = new Map<string, Place>();
-  const places = Array.isArray(gedcom?.places) ? gedcom.places : Array.isArray(gedcom?.place) ? gedcom.place : [];
+  const places = Array.isArray(gedcom?.places)
+    ? gedcom.places
+    : Array.isArray(gedcom?.place)
+    ? gedcom.place
+    : [];
   for (const p of places) {
     const normalized = mapGedcomPlace(p);
     if (normalized) {
@@ -82,11 +92,15 @@ export function mapGedcomPlace(raw: any): Place | undefined {
   const id =
     normalizeRef(raw.id) ??
     extractIdentifier(raw.identifiers) ??
-    (Array.isArray(raw.names) && raw.names[0]?.value ? slugify(raw.names[0].value) : undefined);
+    (Array.isArray(raw.names) && raw.names[0]?.value
+      ? slugify(raw.names[0].value)
+      : undefined);
   const displayName =
     raw.display?.name ??
     raw.fullText ??
-    (Array.isArray(raw.names) ? raw.names[0]?.value ?? getNameFromNames(raw.names) : undefined);
+    (Array.isArray(raw.names)
+      ? raw.names[0]?.value ?? getNameFromNames(raw.names)
+      : undefined);
   if (!id && !displayName) return undefined;
 
   const jurisdictionPath = Array.isArray(raw.jurisdiction)
@@ -96,9 +110,9 @@ export function mapGedcomPlace(raw: any): Place | undefined {
     : undefined;
 
   return {
-    id: id ?? displayName ?? '',
-    displayName: displayName ?? id ?? 'Localidade',
-    type: raw.type ? raw.type.split('/').pop() : undefined,
+    id: id ?? displayName ?? "",
+    displayName: displayName ?? id ?? "Localidade",
+    type: raw.type ? raw.type.split("/").pop() : undefined,
     jurisdictionPath,
   };
 }
@@ -107,7 +121,7 @@ export function extractIdentifier(identifiers: any): string | undefined {
   if (!Array.isArray(identifiers)) return undefined;
   for (const item of identifiers) {
     const value = item?.value ?? item?.identifier ?? item;
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       const normalized = normalizeRef(value);
       if (normalized) return normalized;
     }
@@ -115,26 +129,26 @@ export function extractIdentifier(identifiers: any): string | undefined {
   return undefined;
 }
 
-export function mapGender(input: any): Person['gender'] | undefined {
+export function mapGender(input: any): Person["gender"] | undefined {
   if (!input) return undefined;
   const str = String(input).toLowerCase();
-  if (str.includes('male')) return 'Male';
-  if (str.includes('female')) return 'Female';
-  if (str.includes('unknown')) return 'Unknown';
+  if (str.includes("male")) return "Male";
+  if (str.includes("female")) return "Female";
+  if (str.includes("unknown")) return "Unknown";
   return GENDER_MAP[str] ?? undefined;
 }
 
 export function buildLifespan(birth?: number, death?: number) {
   if (!birth && !death) return undefined;
-  const from = birth ? String(birth) : '…';
-  const to = death ? String(death) : '…';
+  const from = birth ? String(birth) : "…";
+  const to = death ? String(death) : "…";
   return `${from}–${to}`;
 }
 
 export function findFact(facts: any, typeSuffix: string) {
   if (!Array.isArray(facts)) return undefined;
   return facts.find((f) => {
-    const t = String(f?.type ?? '').toLowerCase();
+    const t = String(f?.type ?? "").toLowerCase();
     return t.endsWith(typeSuffix.toLowerCase());
   });
 }
@@ -146,7 +160,9 @@ export function extractYearFromFact(fact: any): number | undefined {
   return extractYearFromString(formal ?? original);
 }
 
-export function extractYearFromString(input?: string | null): number | undefined {
+export function extractYearFromString(
+  input?: string | null
+): number | undefined {
   if (!input) return undefined;
   const match = String(input).match(/(-?\d{4})/);
   if (!match) return undefined;
@@ -158,10 +174,10 @@ export function extractYearFromString(input?: string | null): number | undefined
 export function normalizeRef(input?: string): string | undefined {
   if (!input) return undefined;
   let value = input.trim();
-  if (value.startsWith('#')) value = value.slice(1);
-  const slash = value.lastIndexOf('/');
+  if (value.startsWith("#")) value = value.slice(1);
+  const slash = value.lastIndexOf("/");
   if (slash >= 0) value = value.slice(slash + 1);
-  const colon = value.lastIndexOf(':');
+  const colon = value.lastIndexOf(":");
   if (colon >= 0 && colon < value.length - 1) {
     value = value.slice(colon + 1);
   }
@@ -170,14 +186,14 @@ export function normalizeRef(input?: string): string | undefined {
 
 export function extractResourceId(entry: any): string | undefined {
   if (!entry) return undefined;
-  if (typeof entry === 'string') return normalizeRef(entry);
+  if (typeof entry === "string") return normalizeRef(entry);
   return normalizeRef(
     entry.resourceId ??
       entry.resource ??
       entry.personId ??
       entry.id ??
       entry.href ??
-      entry['@href'] ??
+      entry["@href"] ??
       entry.identifier
   );
 }
@@ -202,20 +218,26 @@ function mapPersonRef(raw: any): PersonRef | undefined {
   const id =
     raw.id ??
     raw.personId ??
-    normalizeRef(raw.resourceId ?? raw.resource ?? raw.href ?? raw.identifier ?? raw.summaryId);
+    normalizeRef(
+      raw.resourceId ??
+        raw.resource ??
+        raw.href ??
+        raw.identifier ??
+        raw.summaryId
+    );
   const name = raw.name ?? raw.displayName ?? raw.fullName ?? raw.text;
   if (!id && !name) return undefined;
   return {
-    id: id ?? name ?? '',
+    id: id ?? name ?? "",
     name: name ?? id ?? undefined,
   };
 }
 
 function slugify(input: string) {
   return input
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .replace(/[^a-zA-Z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
     .toLowerCase();
 }

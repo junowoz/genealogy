@@ -11,11 +11,7 @@ import {
   FamilySearchAuthError,
   FamilySearchClient,
 } from "../../lib/familysearch/client";
-import {
-  collectPlacesFromGedcom,
-  mapGedcomPerson,
-  normalizeRef,
-} from "./utils";
+import { collectPlacesFromGedcom, mapGedcomPerson } from "./utils";
 
 export class FamilySearchSearchAdapter implements SearchAdapter {
   constructor(private readonly options: { client?: FamilySearchClient } = {}) {}
@@ -23,10 +19,16 @@ export class FamilySearchSearchAdapter implements SearchAdapter {
   async searchPersons(params: SearchParams): Promise<MatchCandidate[]> {
     try {
       const client = await this.resolveClient();
-      const query = buildSearchQuery(params);
-      const data = await client.get<any>(
-        `/platform/tree/search?${query.toString()}`
-      );
+      const query = buildTreeSearchQuery(params);
+      const path = `/platform/tree/search?${query.toString()}`;
+      // For search endpoints, prefer GEDCOM X Atom feed
+      try {
+        // Lightweight debug for visibility in server logs
+        console.log("[FamilySearchSearchAdapter] GET", path);
+      } catch {}
+      const data = await client.get<any>(path, {
+        headers: { Accept: "application/x-gedcomx-atom+json" },
+      });
       const entries = Array.isArray(data?.entries) ? data.entries : [];
       const persons: Person[] = [];
       const placeCache = new Map<string, Place>();
@@ -74,30 +76,67 @@ export class FamilySearchSearchAdapter implements SearchAdapter {
 function buildSearchQuery(params: SearchParams) {
   const search = new URLSearchParams();
   search.set("count", "20");
+
+  const qParts: string[] = [];
   const { givenName, surname } = splitName(params.name);
-  
-  // Use givenName/surname OU name, nunca ambos
-  if (givenName || surname) {
-    if (givenName) search.set("givenName", givenName);
-    if (surname) search.set("surname", surname);
-  } else {
-    search.set("name", params.name);
+
+  // Prefer granular name tokens; fallback to name
+  if (givenName) qParts.push(`givenName:"${escapeQuotes(givenName)}"`);
+  if (surname) qParts.push(`surname:"${escapeQuotes(surname)}"`);
+  if (!givenName && !surname && params.name?.trim()) {
+    qParts.push(`name:"${escapeQuotes(params.name.trim())}"`);
   }
-  
+
+  // birthDate: YYYY or YYYY-YYYY
   if (params.birthYearFrom && params.birthYearTo) {
-    search.set("birthDate", `${params.birthYearFrom}-${params.birthYearTo}`);
+    qParts.push(`birthDate:${params.birthYearFrom}-${params.birthYearTo}`);
   } else if (params.birthYearFrom) {
-    search.set("birthDate", `${params.birthYearFrom}`);
+    qParts.push(`birthDate:${params.birthYearFrom}`);
   } else if (params.birthYearTo) {
-    search.set("birthDate", `${params.birthYearTo}`);
+    qParts.push(`birthDate:${params.birthYearTo}`);
   }
-  if (params.placeId) {
-    search.set("birthPlaceId", normalizeRef(params.placeId) ?? params.placeId);
-  } else if (params.placeText) {
-    search.set("birthPlace", params.placeText);
+
+  // birthPlace: prefer text; avoid id to reduce 400 risk
+  if (params.placeText?.trim()) {
+    qParts.push(`birthPlace:"${escapeQuotes(params.placeText.trim())}"`);
   }
-  search.set("order", "lastModified");
+
+  // Only include q if has content
+  const q = qParts.join(" ").trim();
+  if (q) search.set("q", q);
+
   return search;
+}
+
+// Build FamilySearch Tree Person Search parameters using q.* category
+function buildTreeSearchQuery(params: SearchParams) {
+  const search = new URLSearchParams();
+  search.set("count", "20");
+
+  const { givenName, surname } = splitName(params.name);
+  if (surname) search.set("q.surname", surname);
+  if (givenName) search.set("q.givenName", givenName);
+
+  const from = params.birthYearFrom;
+  const to = params.birthYearTo;
+  if (from && to) {
+    search.set("q.birthLikeDate.from", formatSimpleYear(from));
+    search.set("q.birthLikeDate.to", formatSimpleYear(to));
+  } else if (from) {
+    search.set("q.birthLikeDate", formatSimpleYear(from));
+  } else if (to) {
+    search.set("q.birthLikeDate", formatSimpleYear(to));
+  }
+
+  if (params.placeText?.trim()) {
+    search.set("q.birthLikePlace", params.placeText.trim());
+  }
+
+  return search;
+}
+
+function formatSimpleYear(year: number) {
+  return (year >= 0 ? "+" : "") + String(year);
 }
 
 function splitName(name: string) {
@@ -105,7 +144,7 @@ function splitName(name: string) {
   if (!trimmed) return { givenName: "", surname: "" };
   const parts = trimmed.split(" ");
   if (parts.length === 1) {
-    return { givenName: parts[0], surname: "" };
+    return { givenName: "", surname: parts[0] };
   }
   const surname = parts.pop() ?? "";
   const givenName = parts.join(" ");
@@ -113,7 +152,11 @@ function splitName(name: string) {
 }
 
 function buildPersonUrl(id: string) {
-  return `https://www.familysearch.org/tree/person/details/${encodeURIComponent(
+  return `https://beta.familysearch.org/tree/person/details/${encodeURIComponent(
     id
   )}`;
+}
+
+function escapeQuotes(input: string) {
+  return input.replace(/"/g, '\\"');
 }

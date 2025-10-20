@@ -1,7 +1,11 @@
-import type { HintSummary } from '../../domain/types';
-import type { HintsAdapter } from '../interfaces';
-import { getFamilySearchContext, FamilySearchAuthError, FamilySearchClient } from '../../lib/familysearch/client';
-import { normalizeRef } from './utils';
+import type { HintSummary } from "../../domain/types";
+import type { HintsAdapter } from "../interfaces";
+import {
+  getFamilySearchContext,
+  FamilySearchAuthError,
+  FamilySearchClient,
+} from "../../lib/familysearch/client";
+import { normalizeRef } from "./utils";
 
 export class FamilySearchHintsAdapter implements HintsAdapter {
   constructor(private readonly options: { client?: FamilySearchClient } = {}) {}
@@ -10,7 +14,10 @@ export class FamilySearchHintsAdapter implements HintsAdapter {
     try {
       const client = await this.resolveClient();
       const pid = normalizeRef(personId) ?? personId;
-      const data = await client.get<any>(`/platform/tree/persons/${encodeURIComponent(pid)}/matches`);
+      const data = await client.get<any>(
+        `/platform/tree/persons/${encodeURIComponent(pid)}/matches`,
+        { headers: { Accept: "application/x-gedcomx-atom+json" } }
+      );
       const entries = extractEntries(data);
 
       let recordHints = 0;
@@ -18,7 +25,7 @@ export class FamilySearchHintsAdapter implements HintsAdapter {
 
       for (const entry of entries) {
         const category = extractCategory(entry);
-        if (category === 'tree') treeHints += 1;
+        if (category === "tree") treeHints += 1;
         else recordHints += 1;
       }
 
@@ -52,32 +59,45 @@ function extractEntries(data: any): any[] {
   return [];
 }
 
-function extractCategory(entry: any): 'record' | 'tree' {
-  const categories = Array.isArray(entry?.category) ? entry.category : Array.isArray(entry?.categories) ? entry.categories : [];
-  const summary = String(entry?.summary ?? entry?.title ?? '').toLowerCase();
-  const hints = Array.isArray(entry?.content?.matches) ? entry.content.matches : entry?.content?.gedcomx?.matches;
+function extractCategory(entry: any): "record" | "tree" {
+  const categories = Array.isArray(entry?.category)
+    ? entry.category
+    : Array.isArray(entry?.categories)
+    ? entry.categories
+    : [];
+  const summary = String(entry?.summary ?? entry?.title ?? "").toLowerCase();
+  const hints = Array.isArray(entry?.content?.matches)
+    ? entry.content.matches
+    : entry?.content?.gedcomx?.matches;
 
   const lookup = new Set<string>();
   for (const category of categories) {
-    const term = typeof category === 'string' ? category : category?.term ?? category?.label;
+    const term =
+      typeof category === "string"
+        ? category
+        : category?.term ?? category?.label;
     if (term) lookup.add(String(term).toLowerCase());
   }
 
   if (lookup.size) {
-    if ([...lookup].some((c) => c.includes('tree'))) return 'tree';
-    if ([...lookup].some((c) => c.includes('record'))) return 'record';
+    if ([...lookup].some((c) => c.includes("tree"))) return "tree";
+    if ([...lookup].some((c) => c.includes("record"))) return "record";
   }
 
   if (Array.isArray(hints) && hints.length) {
-    const type = String(hints[0]?.type ?? hints[0]?.matchType ?? '').toLowerCase();
-    if (type.includes('tree')) return 'tree';
-    if (type.includes('record')) return 'record';
+    const type = String(
+      hints[0]?.type ?? hints[0]?.matchType ?? ""
+    ).toLowerCase();
+    if (type.includes("tree")) return "tree";
+    if (type.includes("record")) return "record";
   }
 
-  if (summary.includes('árvore') || summary.includes('tree')) return 'tree';
-  return 'record';
+  if (summary.includes("árvore") || summary.includes("tree")) return "tree";
+  return "record";
 }
 
 function buildHintsUrl(pid: string) {
-  return `https://www.familysearch.org/tree/person/sources/${encodeURIComponent(pid)}?active=hints`;
+  return `https://beta.familysearch.org/tree/person/sources/${encodeURIComponent(
+    pid
+  )}?active=hints`;
 }

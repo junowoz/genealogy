@@ -203,7 +203,7 @@ export default function PersonDetails({ pid }: { pid: string }) {
 
             <div>
               <a
-                href={`https://www.familysearch.org/tree/person/details/${pid}`}
+                href={`https://beta.familysearch.org/tree/person/details/${pid}`}
                 target="_blank"
                 rel="noreferrer"
                 className="text-sm underline underline-offset-2"
