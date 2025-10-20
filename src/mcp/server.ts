@@ -578,7 +578,8 @@ registerToolUnsafe(
         {
           headers: {
             Authorization: `Bearer ${auth.accessToken}`,
-            Accept: "application/x-gedcomx-v1+json",
+            Accept: "application/json, application/x-gedcomx-v1+json",
+            "Content-Type": "application/json",
           },
           redirect: "manual",
         }

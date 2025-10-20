@@ -185,7 +185,8 @@ export class FamilySearchClient {
 function buildHeaders(accessToken: string) {
   return {
     Authorization: `Bearer ${accessToken}`,
-    Accept: "application/x-gedcomx-v1+json",
+    Accept: "application/json, application/x-gedcomx-v1+json",
+    "Content-Type": "application/json",
     "Accept-Language": "pt,en;q=0.9",
   };
 }

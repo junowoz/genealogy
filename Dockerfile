@@ -52,6 +52,9 @@ COPY --from=base /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=base /app/node_modules/prisma ./node_modules/prisma
 COPY --from=base /app/prisma ./prisma
 
+# Create cache directory with correct permissions
+RUN mkdir -p .next/cache && chown -R nextjs:nodejs .next
+
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
