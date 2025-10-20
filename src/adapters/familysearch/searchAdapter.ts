@@ -12,6 +12,7 @@ import {
   FamilySearchClient,
 } from "../../lib/familysearch/client";
 import { collectPlacesFromGedcom, mapGedcomPerson } from "./utils";
+import { FamilySearchPlaceAdapter } from "./placeAdapter";
 
 export class FamilySearchSearchAdapter implements SearchAdapter {
   constructor(private readonly options: { client?: FamilySearchClient } = {}) {}
@@ -19,7 +20,16 @@ export class FamilySearchSearchAdapter implements SearchAdapter {
   async searchPersons(params: SearchParams): Promise<MatchCandidate[]> {
     try {
       const client = await this.resolveClient();
-      const query = buildTreeSearchQuery(params);
+      let resolvedPlace: Place | undefined;
+      if (params.placeId) {
+        try {
+          const placeAdapter = new FamilySearchPlaceAdapter({ client });
+          resolvedPlace = await placeAdapter.getPlaceById(params.placeId);
+        } catch {
+          resolvedPlace = undefined;
+        }
+      }
+      const query = buildTreeSearchQuery(params, resolvedPlace);
       const path = `/platform/tree/search?${query.toString()}`;
       // For search endpoints, prefer GEDCOM X Atom feed
       try {
@@ -109,7 +119,7 @@ function buildSearchQuery(params: SearchParams) {
 }
 
 // Build FamilySearch Tree Person Search parameters using q.* category
-function buildTreeSearchQuery(params: SearchParams) {
+function buildTreeSearchQuery(params: SearchParams, place?: Place) {
   const search = new URLSearchParams();
   search.set("count", "20");
 
@@ -130,6 +140,18 @@ function buildTreeSearchQuery(params: SearchParams) {
 
   if (params.placeText?.trim()) {
     search.set("q.birthLikePlace", params.placeText.trim());
+  } else if (place?.displayName) {
+    search.set("q.birthLikePlace", place.displayName);
+    // Add filter using Places hierarchy if we know the parent id
+    const path = place.jurisdictionPath ?? [];
+    if (path.length > 0) {
+      const parentId = path[path.length - 1];
+      const levelIndex = path.length; // 0=country, 1=state, etc. Current place is at index=path.length
+      const leaf = extractLeafPlaceName(place.displayName);
+      if (parentId && leaf) {
+        search.set(`f.birthLikePlace${levelIndex}`, `${parentId},${leaf}`);
+      }
+    }
   }
 
   return search;
@@ -159,4 +181,9 @@ function buildPersonUrl(id: string) {
 
 function escapeQuotes(input: string) {
   return input.replace(/"/g, '\\"');
+}
+
+function extractLeafPlaceName(displayName: string) {
+  const first = displayName.split(",")[0]?.trim();
+  return first || displayName.trim();
 }
