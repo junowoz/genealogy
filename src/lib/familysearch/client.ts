@@ -95,6 +95,7 @@ export async function refreshAccessToken(refreshToken: string) {
 export async function fetchCurrentUser(
   accessToken: string
 ): Promise<CurrentUserProfile | undefined> {
+  console.log("[fetchCurrentUser] Starting fetch");
   const res = await fetch(
     `${env.FS_API_BASE_URL.replace(/\/+$/, "")}/platform/users/current`,
     {
@@ -103,23 +104,50 @@ export async function fetchCurrentUser(
     }
   );
 
+  console.log("[fetchCurrentUser] Response status:", res.status);
+
   if (res.status === 401) {
+    console.warn("[fetchCurrentUser] Unauthorized (401)");
     return undefined;
   }
 
   if (!res.ok) {
     const text = await res.text();
+    console.error("[fetchCurrentUser] Error response:", {
+      status: res.status,
+      statusText: res.statusText,
+      body: text,
+    });
     throw new Error(
       `Failed to load FamilySearch profile: ${res.status} ${res.statusText} — ${text}`
     );
   }
 
   const payload = await res.json();
+  console.log("[fetchCurrentUser] Payload received:", {
+    hasUsers: Array.isArray(payload?.users),
+    usersCount: Array.isArray(payload?.users) ? payload.users.length : 0,
+    payloadKeys: Object.keys(payload || {}),
+  });
+
   const user =
     Array.isArray(payload?.users) && payload.users.length
       ? payload.users[0]
       : undefined;
-  if (!user) return undefined;
+  
+  if (!user) {
+    console.warn("[fetchCurrentUser] No user found in payload");
+    return undefined;
+  }
+
+  console.log("[fetchCurrentUser] User object:", {
+    hasId: !!user.id,
+    hasUserId: !!user.userId,
+    hasLinks: !!user.links,
+    linksKeys: user.links ? Object.keys(user.links) : [],
+    personLink: user?.links?.person?.href,
+    treeLink: user?.links?.tree?.href,
+  });
 
   const personLink: string | undefined =
     user?.links?.person?.href ??
@@ -131,7 +159,9 @@ export async function fetchCurrentUser(
     ? personLink.split("/").filter(Boolean).pop()
     : undefined;
 
-  return {
+  console.log("[fetchCurrentUser] Extracted personId:", personId);
+
+  const profile = {
     id: user.id ?? user.userId ?? undefined,
     displayName:
       user.displayName ?? user.fullName ?? user.contactName ?? undefined,
@@ -139,6 +169,10 @@ export async function fetchCurrentUser(
     personId,
     email: user.preferredEmail ?? user.email ?? undefined,
   };
+
+  console.log("[fetchCurrentUser] Final profile:", profile);
+
+  return profile;
 }
 
 export class FamilySearchClient {

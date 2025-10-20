@@ -77,16 +77,32 @@ export async function GET(req: Request) {
     try {
       console.log("[OAuth Callback] Fetching user profile");
       const profile = await fetchCurrentUser(token.access_token);
+      console.log("[OAuth Callback] Profile response:", {
+        hasProfile: !!profile,
+        profileKeys: profile ? Object.keys(profile) : [],
+        id: profile?.id,
+        personId: profile?.personId,
+        displayName: profile?.displayName,
+        contactName: profile?.contactName,
+      });
       if (profile) {
         session.familySearch.displayName =
           profile.displayName ?? profile.contactName;
         session.familySearch.personId = profile.personId ?? profile.id;
-        console.log("[OAuth Callback] User profile loaded", {
+        console.log("[OAuth Callback] User profile saved to session", {
           personId: session.familySearch.personId,
+          displayName: session.familySearch.displayName,
         });
+      } else {
+        console.warn(
+          "[OAuth Callback] No profile returned from fetchCurrentUser"
+        );
       }
     } catch (profileErr) {
-      console.error("Failed to fetch FamilySearch profile", profileErr);
+      console.error("[OAuth Callback] Failed to fetch FamilySearch profile:", {
+        error: (profileErr as Error).message,
+        stack: (profileErr as Error).stack,
+      });
     }
 
     // Save session FIRST before MCP store
