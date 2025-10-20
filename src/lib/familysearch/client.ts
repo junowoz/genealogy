@@ -134,7 +134,7 @@ export async function fetchCurrentUser(
     Array.isArray(payload?.users) && payload.users.length
       ? payload.users[0]
       : undefined;
-  
+
   if (!user) {
     console.warn("[fetchCurrentUser] No user found in payload");
     return undefined;
