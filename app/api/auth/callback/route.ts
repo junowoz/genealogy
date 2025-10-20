@@ -46,13 +46,30 @@ export async function GET(req: Request) {
       codeVerifier: pending.verifier,
     });
 
+    console.log("[OAuth Callback] Token received:", {
+      hasAccessToken: !!token.access_token,
+      hasRefreshToken: !!token.refresh_token,
+      expiresIn: token.expires_in,
+      tokenType: token.token_type,
+      scope: token.scope,
+    });
+
     const now = Date.now();
+    const expiresIn = token.expires_in ?? 3600; // Default 1 hora se não vier
+    const expiresAt = now + expiresIn * 1000;
+
+    console.log("[OAuth Callback] Token expiration:", {
+      now: new Date(now).toISOString(),
+      expiresIn: `${expiresIn} seconds (${Math.floor(expiresIn / 60)} minutes)`,
+      expiresAt: new Date(expiresAt).toISOString(),
+    });
+
     session.familySearch = {
       accessToken: token.access_token,
       refreshToken: token.refresh_token,
       scope: token.scope ?? env.FS_OAUTH_SCOPE,
       tokenType: token.token_type ?? "Bearer",
-      expiresAt: now + (token.expires_in ?? 0) * 1000,
+      expiresAt,
       idToken: token.id_token,
       lastLinkedAt: now,
     };
@@ -75,7 +92,13 @@ export async function GET(req: Request) {
     // Save session FIRST before MCP store
     session.pendingAuth = undefined;
     await session.save();
-    console.log("[OAuth Callback] Session saved successfully");
+    console.log("[OAuth Callback] Session saved successfully", {
+      hasAccessToken: !!session.familySearch.accessToken,
+      hasRefreshToken: !!session.familySearch.refreshToken,
+      personId: session.familySearch.personId,
+      expiresAt: new Date(session.familySearch.expiresAt).toISOString(),
+      cookieName: "genealogy_session",
+    });
 
     // If this is an MCP session, save to MCP store AFTER session is saved
     if (pending.state.startsWith("mcp:")) {
