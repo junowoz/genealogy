@@ -1,26 +1,35 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { env } from '../../../../src/lib/env';
-import { FS_AUTHORIZATION_URL } from '../../../../src/lib/familysearch/client';
-import { generateCodeChallenge, generateCodeVerifier } from '../../../../src/lib/pkce';
-import { getSession } from '../../../../src/lib/session';
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { env } from "../../../../src/lib/env";
+import { FS_AUTHORIZATION_URL } from "../../../../src/lib/familysearch/client";
+import {
+  generateCodeChallenge,
+  generateCodeVerifier,
+} from "../../../../src/lib/pkce";
+import { getSession } from "../../../../src/lib/session";
 
 const LoginQuerySchema = z.object({
   state: z
     .string()
-    .regex(/^[A-Za-z0-9:_-]{1,128}$/, 'state inválido')
-    .default('web'),
+    .regex(/^[A-Za-z0-9:_-]{1,128}$/, "state inválido")
+    .default("web"),
   redirectTo: z.string().optional(),
 });
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const stateParam = url.searchParams.get('state') ?? undefined;
-  const redirectToParam = url.searchParams.get('redirectTo') ?? undefined;
+  const stateParam = url.searchParams.get("state") ?? undefined;
+  const redirectToParam = url.searchParams.get("redirectTo") ?? undefined;
 
-  const parsed = LoginQuerySchema.safeParse({ state: stateParam, redirectTo: redirectToParam });
+  const parsed = LoginQuerySchema.safeParse({
+    state: stateParam,
+    redirectTo: redirectToParam,
+  });
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Parâmetros inválidos' }, { status: 400 });
+    return NextResponse.json(
+      { error: "Parâmetros inválidos" },
+      { status: 400 }
+    );
   }
 
   const { state, redirectTo } = parsed.data;
@@ -37,13 +46,20 @@ export async function GET(req: Request) {
   await session.save();
 
   const authorizeUrl = new URL(FS_AUTHORIZATION_URL);
-  authorizeUrl.searchParams.set('response_type', 'code');
-  authorizeUrl.searchParams.set('client_id', env.FS_APP_KEY);
-  authorizeUrl.searchParams.set('redirect_uri', env.FS_REDIRECT_URI);
-  authorizeUrl.searchParams.set('state', state);
-  authorizeUrl.searchParams.set('code_challenge', challenge);
-  authorizeUrl.searchParams.set('code_challenge_method', 'S256');
-  authorizeUrl.searchParams.set('scope', env.FS_OAUTH_SCOPE);
+  authorizeUrl.searchParams.set("response_type", "code");
+  authorizeUrl.searchParams.set("client_id", env.FS_APP_KEY);
+  authorizeUrl.searchParams.set("redirect_uri", env.FS_REDIRECT_URI);
+  authorizeUrl.searchParams.set("state", state);
+  authorizeUrl.searchParams.set("code_challenge", challenge);
+  authorizeUrl.searchParams.set("code_challenge_method", "S256");
+  authorizeUrl.searchParams.set("scope", env.FS_OAUTH_SCOPE);
+
+  console.log("[OAuth Login] Authorization URL params:", {
+    clientId: env.FS_APP_KEY.substring(0, 8) + "...",
+    redirectUri: env.FS_REDIRECT_URI,
+    scope: env.FS_OAUTH_SCOPE,
+    state: state,
+  });
 
   return NextResponse.redirect(authorizeUrl.toString(), { status: 302 });
 }

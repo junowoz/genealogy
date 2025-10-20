@@ -96,6 +96,11 @@ export async function fetchCurrentUser(
   accessToken: string
 ): Promise<CurrentUserProfile | undefined> {
   console.log("[fetchCurrentUser] Starting fetch for current tree person");
+  console.log("[fetchCurrentUser] API Base URL:", env.FS_API_BASE_URL);
+  console.log(
+    "[fetchCurrentUser] Token prefix:",
+    accessToken.substring(0, 20) + "..."
+  );
 
   // Use the correct endpoint to get current user's person ID
   const res = await fetch(
@@ -108,6 +113,10 @@ export async function fetchCurrentUser(
   );
 
   console.log("[fetchCurrentUser] Response status:", res.status);
+  console.log(
+    "[fetchCurrentUser] Response headers:",
+    Object.fromEntries(res.headers.entries())
+  );
 
   // The API returns 303 with Location header containing the person URL
   if (res.status === 303) {
@@ -135,7 +144,16 @@ export async function fetchCurrentUser(
   }
 
   if (res.status === 401) {
-    console.warn("[fetchCurrentUser] Unauthorized (401)");
+    // Log the error body for debugging
+    try {
+      const errorText = await res.text();
+      console.error("[fetchCurrentUser] 401 Error body:", errorText);
+    } catch (e) {
+      console.error("[fetchCurrentUser] Could not read error body");
+    }
+    console.warn(
+      "[fetchCurrentUser] Unauthorized (401) - Token may be invalid or missing permissions"
+    );
     return undefined;
   }
 
@@ -180,6 +198,7 @@ export async function fetchCurrentUser(
   console.warn("[fetchCurrentUser] Could not extract person ID");
   return undefined;
 }
+
 export class FamilySearchClient {
   private readonly baseUrl = env.FS_API_BASE_URL.replace(/\/+$/, "");
 

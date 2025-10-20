@@ -67,7 +67,7 @@ Arquivo `.env` obrigatório na raiz:
 FS_APP_KEY=sua-app-key-beta-aqui
 FS_REDIRECT_URI=https://genealogy.junowoz.com/api/auth/callback
 FS_AUTH_BASE_URL=https://identbeta.familysearch.org/cis-web/oauth2/v3
-FS_API_BASE_URL=https://api-integ.familysearch.org
+FS_API_BASE_URL=https://apibeta.familysearch.org
 FS_OAUTH_SCOPE=https://api.familysearch.org/auth/familytree.read
 
 # App
