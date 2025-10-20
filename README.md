@@ -63,18 +63,19 @@ O projeto entrega um **conector MCP** para o **FamilySearch** integrado ao ChatG
 Arquivo `.env` obrigatório na raiz:
 
 ```ini
-# FamilySearch
-FS_ENV=beta
-FS_APP_KEY=exemplo-de-api-key
+# FamilySearch Beta (único ambiente)
+FS_APP_KEY=sua-app-key-beta-aqui
 FS_REDIRECT_URI=https://genealogy.junowoz.com/api/auth/callback
-FS_OAUTH_SCOPE=openid profile https://api.familysearch.org/auth/familytree.read
+FS_AUTH_BASE_URL=https://identbeta.familysearch.org/cis-web/oauth2/v3
+FS_API_BASE_URL=https://api-integ.familysearch.org
+FS_OAUTH_SCOPE=https://api.familysearch.org/auth/familytree.read
 
 # App
 NEXT_PUBLIC_APP_ORIGIN=https://genealogy.junowoz.com
-SESSION_SECRET=troque-por-uma-chave-com-32+chars
+SESSION_SECRET=troque-por-uma-chave-aleatoria-com-32-ou-mais-caracteres
 
 # Database
-DATABASE_URL=postgresql://user:password@host:5432/genealogy?schema=public
+DATABASE_URL=postgresql://user:password@host:5432/genealogy-db
 ```
 
 ### Comandos de Desenvolvimento

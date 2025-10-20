@@ -33,7 +33,7 @@ const sessionOptions: SessionOptions = {
   cookieOptions: {
     httpOnly: true,
     sameSite: "lax",
-    secure: env.NODE_ENV !== "development",
+    secure: true, // Sempre HTTPS em produção
     path: "/",
   },
   ttl: 60 * 60 * 24 * 7, // 7 days

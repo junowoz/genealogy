@@ -642,7 +642,12 @@ export function loginUrlForSession(sessionId: string) {
 }
 
 async function resolveClientForSession(sessionId?: string) {
+  console.log(
+    "[MCP Server] resolveClientForSession called with sessionId:",
+    sessionId
+  );
   if (!sessionId) {
+    console.error("[MCP Server] No sessionId provided");
     throw new FamilySearchAuthError(
       "not_linked",
       "Sessão sem identificador de MCP."
@@ -650,13 +655,17 @@ async function resolveClientForSession(sessionId?: string) {
   }
   const auth = await getMcpAuth(sessionId);
   if (!auth) {
+    console.error("[MCP Server] No auth found for sessionId:", sessionId);
     throw new FamilySearchAuthError(
       "not_linked",
       `Vincule sua conta FamilySearch abrindo ${loginUrlForSession(sessionId)}.`
     );
   }
+  console.log("[MCP Server] Auth found, checking if fresh");
   const fresh = await ensureFreshAuth(auth);
-  saveMcpAuth(sessionId, fresh);
+  console.log("[MCP Server] Auth is fresh, saving to store");
+  await saveMcpAuth(sessionId, fresh);
+  console.log("[MCP Server] Returning client with access token");
   return { auth: fresh, client: new FamilySearchClient(fresh.accessToken) };
 }
 
