@@ -5,6 +5,8 @@ node_modules
 .next
 uploads
 queue
+data
+.codex-security
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

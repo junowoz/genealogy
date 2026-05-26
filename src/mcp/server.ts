@@ -4,43 +4,46 @@ import path from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
-import { env } from "../lib/env";
+import { getAppOrigin } from "../lib/env";
 import {
+  fetchCurrentUser,
   FamilySearchAuthError,
   FamilySearchClient,
   ensureFreshAuth,
 } from "../lib/familysearch/client";
+import { encodeFamilySearchId, normalizeFamilySearchId } from "../lib/familysearch/ids";
 import { getMcpAuth, saveMcpAuth, clearMcpAuth } from "./store";
 import { FamilySearchSearchAdapter } from "../adapters/familysearch/searchAdapter";
 import { FamilySearchPlaceAdapter } from "../adapters/familysearch/placeAdapter";
 import { FamilySearchPedigreeAdapter } from "../adapters/familysearch/pedigreeAdapter";
 import { FamilySearchHintsAdapter } from "../adapters/familysearch/hintsAdapter";
 import { FamilySearchChangeAdapter } from "../adapters/familysearch/changeAdapter";
-import type { FamilySearchAuthState } from "../lib/session";
 
 const SEARCH_WIDGET_URI = "ui://widget/genealogy-search.html";
-
-export const mcpServer = new McpServer(
-  {
-    name: "genealogy-mcp",
-    version: "0.2.0",
-    description: "Genealogy · consultas no FamilySearch",
-  },
-  {
-    capabilities: {
-      logging: {},
-      tools: {},
-      resources: {},
-    },
-  }
-);
-
-function registerToolUnsafe(name: string, config: any, handler: any) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-  mcpServer.registerTool(name, config, handler);
-}
+const MCP_SESSION_ID_PATTERN = /^[\x21-\x7e]{1,256}$/;
 
 const transports = new Map<string, StreamableHTTPServerTransport>();
+
+function buildMcpServer() {
+  const mcpServer = new McpServer(
+    {
+      name: "genealogy-mcp",
+      version: "0.3.0",
+      description: "Genealogy · consultas no FamilySearch",
+    },
+    {
+      capabilities: {
+        logging: {},
+        tools: {},
+        resources: {},
+      },
+    }
+  );
+
+  function registerToolUnsafe(name: string, config: any, handler: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    mcpServer.registerTool(name, config, handler);
+  }
 
 function loadWidgetTemplate() {
   const bundlePath = path.join(process.cwd(), "public/mcp/widget.js");
@@ -80,31 +83,48 @@ function loadWidgetTemplate() {
 mcpServer.registerResource(
   "genealogy-search-widget",
   SEARCH_WIDGET_URI,
-  {
-    "openai/widgetDescription": "Tabela de candidatos e filtros de pesquisa.",
-    "openai/widgetPrefersBorder": true,
-  },
+  {},
   async () => ({
     contents: [
       {
         uri: SEARCH_WIDGET_URI,
-        mimeType: "text/html+skybridge",
+        mimeType: "text/html;profile=mcp-app",
         text: loadWidgetTemplate(),
+        _meta: {
+          ui: {
+            domain: getAppOrigin(),
+            prefersBorder: true,
+            csp: {
+              connectDomains: [getAppOrigin()],
+              resourceDomains: [getAppOrigin()],
+            },
+          },
+          "openai/widgetDescription":
+            "Mostra candidatos de pesquisa genealógica com pontuação e links.",
+          "openai/widgetPrefersBorder": true,
+        },
       },
     ],
   })
 );
 
+const readOnlyAnnotations = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: true,
+};
+
 const searchInputSchema = {
-  name: z.string().min(1).describe("Nome completo ou parcial"),
+  name: z.string().trim().min(1).max(120).describe("Nome completo ou parcial"),
   birthYearFrom: z
     .number()
     .int()
     .optional()
     .describe("Ano mínimo de nascimento"),
   birthYearTo: z.number().int().optional().describe("Ano máximo de nascimento"),
-  placeText: z.string().optional().describe("Texto livre do local"),
-  placeId: z.string().optional().describe("ID do place authority"),
+  placeText: z.string().trim().max(160).optional().describe("Texto livre do local"),
+  placeId: z.string().trim().max(80).optional().describe("ID do place authority"),
 };
 
 const searchOutputSchema = {
@@ -127,9 +147,11 @@ registerToolUnsafe(
       "Retorna candidatos da busca de pessoas com ranking e dados resumidos.",
     inputSchema: searchInputSchema,
     outputSchema: searchOutputSchema,
-    annotations: { readOnlyHint: true },
+    annotations: readOnlyAnnotations,
     _meta: {
+      ui: { resourceUri: SEARCH_WIDGET_URI, visibility: ["model", "app"] },
       "openai/outputTemplate": SEARCH_WIDGET_URI,
+      "openai/widgetAccessible": true,
       "openai/toolInvocation/invoking": "Buscando candidatos…",
       "openai/toolInvocation/invoked": "Resultados prontos",
     },
@@ -172,7 +194,7 @@ registerToolUnsafe(
 );
 
 const placeAutocompleteInput = {
-  q: z.string().min(2).describe("Texto do local para autocomplete"),
+  q: z.string().trim().min(2).max(120).describe("Texto do local para autocomplete"),
 };
 
 const placeAutocompleteOutput = {
@@ -186,7 +208,7 @@ registerToolUnsafe(
     description: "Sugere locais do Place Authority pelo texto informado.",
     inputSchema: placeAutocompleteInput,
     outputSchema: placeAutocompleteOutput,
-    annotations: { readOnlyHint: true },
+    annotations: readOnlyAnnotations,
   },
   async (args: any, extra: any) => {
     const { sessionId } = extra;
@@ -210,7 +232,7 @@ registerToolUnsafe(
 );
 
 const ancestryInputSchema = {
-  pid: z.string().min(1).describe("Person ID (PID)"),
+  pid: z.string().trim().regex(/^[A-Za-z0-9-]{1,32}$/).describe("Person ID (PID)"),
   generations: z
     .number()
     .int()
@@ -227,7 +249,7 @@ const ancestryOutputSchema = {
 };
 
 const descendancyInputSchema = {
-  pid: z.string().min(1).describe("Person ID (PID)"),
+  pid: z.string().trim().regex(/^[A-Za-z0-9-]{1,32}$/).describe("Person ID (PID)"),
   generations: z
     .number()
     .int()
@@ -251,11 +273,11 @@ const hintsSummaryOutputSchema = {
 };
 
 const hintsSummaryInputSchema = {
-  pid: z.string().min(1).describe("Person ID (PID)"),
+  pid: z.string().trim().regex(/^[A-Za-z0-9-]{1,32}$/).describe("Person ID (PID)"),
 };
 
 const changeLogInputSchema = {
-  pid: z.string().min(1).describe("Person ID (PID)"),
+  pid: z.string().trim().regex(/^[A-Za-z0-9-]{1,32}$/).describe("Person ID (PID)"),
 };
 
 const changeLogOutputSchema = {
@@ -270,7 +292,7 @@ registerToolUnsafe(
     description: "Retorna nós ancestrais diretos do PID informado.",
     inputSchema: ancestryInputSchema,
     outputSchema: ancestryOutputSchema,
-    annotations: { readOnlyHint: true },
+    annotations: readOnlyAnnotations,
   },
   async (args: any, extra: any) => {
     const { sessionId } = extra;
@@ -302,7 +324,7 @@ registerToolUnsafe(
     description: "Retorna descendentes diretos do PID informado.",
     inputSchema: descendancyInputSchema,
     outputSchema: descendancyOutputSchema,
-    annotations: { readOnlyHint: true },
+    annotations: readOnlyAnnotations,
   },
   async (args: any, extra: any) => {
     const { sessionId } = extra;
@@ -337,7 +359,7 @@ registerToolUnsafe(
     description: "Conta hints de registros/árvore do PID informado.",
     inputSchema: hintsSummaryInputSchema,
     outputSchema: hintsSummaryOutputSchema,
-    annotations: { readOnlyHint: true },
+    annotations: readOnlyAnnotations,
   },
   async (args: any, extra: any) => {
     const { sessionId } = extra;
@@ -367,7 +389,7 @@ registerToolUnsafe(
     description: "Retorna mudanças recentes no PID informado.",
     inputSchema: changeLogInputSchema,
     outputSchema: changeLogOutputSchema,
-    annotations: { readOnlyHint: true },
+    annotations: readOnlyAnnotations,
   },
   async (args: any, extra: any) => {
     const { sessionId } = extra;
@@ -393,7 +415,7 @@ registerToolUnsafe(
 // ==================== PERSON DETAILS ====================
 
 const personDetailsInputSchema = {
-  pid: z.string().min(1).describe("Person ID (PID)"),
+  pid: z.string().trim().regex(/^[A-Za-z0-9-]{1,32}$/).describe("Person ID (PID)"),
 };
 
 const personDetailsOutputSchema = {
@@ -409,13 +431,15 @@ registerToolUnsafe(
       "Retorna informações completas de uma pessoa (nomes, datas, fatos).",
     inputSchema: personDetailsInputSchema,
     outputSchema: personDetailsOutputSchema,
-    annotations: { readOnlyHint: true },
+    annotations: readOnlyAnnotations,
   },
   async (args: any, extra: any) => {
     const { sessionId } = extra;
     try {
       const { client } = await resolveClientForSession(sessionId);
-      const data = await client.get<any>(`/platform/tree/persons/${args.pid}`);
+      const data = await client.get<any>(
+        `/platform/tree/persons/${encodeFamilySearchId(args.pid)}`
+      );
 
       const person = data?.persons?.[0];
       if (!person) {
@@ -443,7 +467,7 @@ registerToolUnsafe(
 // ==================== PERSON RELATIVES ====================
 
 const personRelativesInputSchema = {
-  pid: z.string().min(1).describe("Person ID (PID)"),
+  pid: z.string().trim().regex(/^[A-Za-z0-9-]{1,32}$/).describe("Person ID (PID)"),
 };
 
 const personRelativesOutputSchema = {
@@ -459,14 +483,15 @@ registerToolUnsafe(
     description: "Lista pais, cônjuges e filhos de uma pessoa.",
     inputSchema: personRelativesInputSchema,
     outputSchema: personRelativesOutputSchema,
-    annotations: { readOnlyHint: true },
+    annotations: readOnlyAnnotations,
   },
   async (args: any, extra: any) => {
     const { sessionId } = extra;
     try {
       const { client } = await resolveClientForSession(sessionId);
+      const pid = normalizeFamilySearchId(args.pid);
       const data = await client.get<any>(
-        `/platform/tree/persons/${args.pid}?relatives=true`
+        `/platform/tree/persons/${encodeFamilySearchId(pid)}?relatives=true`
       );
 
       const relationships = data?.relationships ?? [];
@@ -486,7 +511,7 @@ registerToolUnsafe(
           const parent1Id = rel.parent1?.resourceId;
           const parent2Id = rel.parent2?.resourceId;
 
-          if (childId === args.pid) {
+          if (childId === pid) {
             // This person is the child, add parents
             if (parent1Id) parents.push(personsMap.get(parent1Id));
             if (parent2Id) parents.push(personsMap.get(parent2Id));
@@ -501,9 +526,9 @@ registerToolUnsafe(
           const person1Id = rel.person1?.resourceId;
           const person2Id = rel.person2?.resourceId;
 
-          if (person1Id === args.pid && person2Id) {
+          if (person1Id === pid && person2Id) {
             spouses.push(personsMap.get(person2Id));
-          } else if (person2Id === args.pid && person1Id) {
+          } else if (person2Id === pid && person1Id) {
             spouses.push(personsMap.get(person1Id));
           }
         }
@@ -545,12 +570,12 @@ registerToolUnsafe(
       "Retorna informações do usuário logado (Person ID, nome, email).",
     inputSchema: {},
     outputSchema: currentUserOutputSchema,
-    annotations: { readOnlyHint: true },
+    annotations: readOnlyAnnotations,
   },
   async (_args: any, extra: any) => {
     const { sessionId } = extra;
     try {
-      const { auth, client } = await resolveClientForSession(sessionId);
+      const { auth } = await resolveClientForSession(sessionId);
 
       // Try to get from auth first
       if (auth.personId && auth.displayName) {
@@ -569,42 +594,22 @@ registerToolUnsafe(
         };
       }
 
-      // Fetch from API if not in auth
-      const res = await fetch(
-        `${env.FS_API_BASE_URL.replace(
-          /\/+$/,
-          ""
-        )}/platform/tree/current-person`,
-        {
-          headers: {
-            Authorization: `Bearer ${auth.accessToken}`,
-            Accept: "application/json, application/x-gedcomx-v1+json",
-            "Content-Type": "application/json",
+      const profile = await fetchCurrentUser(auth.accessToken);
+      const personId = profile?.personId ?? profile?.id;
+      if (personId) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Seu Person ID: ${personId}`,
+            },
+          ],
+          structuredContent: {
+            userId: personId,
+            personId,
+            displayName: auth.displayName ?? profile?.displayName,
           },
-          redirect: "manual",
-        }
-      );
-
-      if (res.status === 303) {
-        const location = res.headers.get("Location");
-        if (location) {
-          const personId = location.split("/").filter(Boolean).pop();
-          if (personId) {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `Seu Person ID: ${personId}`,
-                },
-              ],
-              structuredContent: {
-                userId: personId,
-                personId,
-                displayName: auth.displayName,
-              },
-            };
-          }
-        }
+        };
       }
 
       throw new Error(
@@ -615,6 +620,9 @@ registerToolUnsafe(
     }
   }
 );
+
+  return mcpServer;
+}
 
 export async function createTransport() {
   const transport = new StreamableHTTPServerTransport({
@@ -627,28 +635,24 @@ export async function createTransport() {
       clearMcpAuth(sessionId);
     },
   });
-  await mcpServer.connect(transport);
+  const server = buildMcpServer();
+  await server.connect(transport);
   return transport;
 }
 
 export function getTransport(sessionId: string | undefined) {
-  if (!sessionId) return undefined;
+  if (!sessionId || !MCP_SESSION_ID_PATTERN.test(sessionId)) return undefined;
   return transports.get(sessionId);
 }
 
 export function loginUrlForSession(sessionId: string) {
-  const url = new URL("/api/auth/login", env.NEXT_PUBLIC_APP_ORIGIN);
+  const url = new URL("/api/auth/login", getAppOrigin());
   url.searchParams.set("state", `mcp:${sessionId}`);
   return url.toString();
 }
 
 async function resolveClientForSession(sessionId?: string) {
-  console.log(
-    "[MCP Server] resolveClientForSession called with sessionId:",
-    sessionId
-  );
   if (!sessionId) {
-    console.error("[MCP Server] No sessionId provided");
     throw new FamilySearchAuthError(
       "not_linked",
       "Sessão sem identificador de MCP."
@@ -656,17 +660,13 @@ async function resolveClientForSession(sessionId?: string) {
   }
   const auth = await getMcpAuth(sessionId);
   if (!auth) {
-    console.error("[MCP Server] No auth found for sessionId:", sessionId);
     throw new FamilySearchAuthError(
       "not_linked",
       `Vincule sua conta FamilySearch abrindo ${loginUrlForSession(sessionId)}.`
     );
   }
-  console.log("[MCP Server] Auth found, checking if fresh");
   const fresh = await ensureFreshAuth(auth);
-  console.log("[MCP Server] Auth is fresh, saving to store");
   await saveMcpAuth(sessionId, fresh);
-  console.log("[MCP Server] Returning client with access token");
   return { auth: fresh, client: new FamilySearchClient(fresh.accessToken) };
 }
 
@@ -674,7 +674,7 @@ function handleToolError(err: unknown, sessionId?: string) {
   if (err instanceof FamilySearchAuthError) {
     const loginUrl = sessionId
       ? loginUrlForSession(sessionId)
-      : `${env.NEXT_PUBLIC_APP_ORIGIN}/api/auth/login?state=mcp`;
+      : `${getAppOrigin()}/api/auth/login?state=mcp`;
     return {
       content: [
         { type: "text", text: `${err.message}` },

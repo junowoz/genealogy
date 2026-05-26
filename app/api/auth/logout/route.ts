@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { env } from '../../../../src/lib/env';
+import { getAppOrigin } from '../../../../src/lib/env';
 import { getSession } from '../../../../src/lib/session';
 
 export async function POST(req: Request) {
@@ -10,8 +10,9 @@ export async function POST(req: Request) {
   const redirectTo = url.searchParams.get('redirectTo');
   if (redirectTo) {
     try {
-      const dest = new URL(redirectTo, env.NEXT_PUBLIC_APP_ORIGIN);
-      if (dest.origin === env.NEXT_PUBLIC_APP_ORIGIN) {
+      const origin = getAppOrigin();
+      const dest = new URL(redirectTo, origin);
+      if (dest.origin === origin) {
         return NextResponse.redirect(dest.toString(), { status: 302 });
       }
     } catch {

@@ -17,6 +17,10 @@ const result = await build({
   target: ["es2020"],
   minify: true,
   sourcemap: false,
+  legalComments: "eof",
+  define: {
+    "process.env.NODE_ENV": '"production"',
+  },
 });
 
 if (result.errors?.length) {

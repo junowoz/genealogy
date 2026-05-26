@@ -71,8 +71,8 @@ function App() {
     const bridge = getOpenAi();
     try {
       await bridge?.setWidgetState?.({ ...(widgetState ?? {}), filter });
-    } catch (err) {
-      console.warn("widget state error", err);
+    } catch {
+      // Widget state persistence is optional in older hosts.
     }
     if (bridge?.callTool) {
       await bridge.callTool("fs.search_people", bridge.toolInput ?? {});

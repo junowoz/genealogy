@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { env } from "../../../../src/lib/env";
-import { FS_AUTHORIZATION_URL } from "../../../../src/lib/familysearch/client";
+import { env, getAppOrigin } from "../../../../src/lib/env";
+import { getFamilySearchAuthorizationUrl } from "../../../../src/lib/familysearch/client";
 import {
   generateCodeChallenge,
   generateCodeVerifier,
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
   };
   await session.save();
 
-  const authorizeUrl = new URL(FS_AUTHORIZATION_URL);
+  const authorizeUrl = new URL(getFamilySearchAuthorizationUrl());
   authorizeUrl.searchParams.set("response_type", "code");
   authorizeUrl.searchParams.set("client_id", env.FS_APP_KEY);
   authorizeUrl.searchParams.set("redirect_uri", env.FS_REDIRECT_URI);
@@ -54,21 +54,15 @@ export async function GET(req: Request) {
   authorizeUrl.searchParams.set("code_challenge_method", "S256");
   authorizeUrl.searchParams.set("scope", env.FS_OAUTH_SCOPE);
 
-  console.log("[OAuth Login] Authorization URL params:", {
-    clientId: env.FS_APP_KEY.substring(0, 8) + "...",
-    redirectUri: env.FS_REDIRECT_URI,
-    scope: env.FS_OAUTH_SCOPE,
-    state: state,
-  });
-
   return NextResponse.redirect(authorizeUrl.toString(), { status: 302 });
 }
 
 function normalizeRedirect(redirectTo?: string) {
   if (!redirectTo) return undefined;
   try {
-    const url = new URL(redirectTo, env.NEXT_PUBLIC_APP_ORIGIN);
-    if (url.origin !== env.NEXT_PUBLIC_APP_ORIGIN) return undefined;
+    const origin = getAppOrigin();
+    const url = new URL(redirectTo, origin);
+    if (url.origin !== origin) return undefined;
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
     return undefined;

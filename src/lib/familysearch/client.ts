@@ -25,14 +25,15 @@ export interface CurrentUserProfile {
   email?: string;
 }
 
-const authorizationUrl = `${env.FS_AUTH_BASE_URL.replace(
-  /\/+$/,
-  ""
-)}/authorization`;
-const tokenUrl = `${env.FS_AUTH_BASE_URL.replace(/\/+$/, "")}/token`;
+const FAMILYSEARCH_TIMEOUT_MS = 20_000;
 
-export const FS_AUTHORIZATION_URL = authorizationUrl;
-export const FS_TOKEN_URL = tokenUrl;
+export function getFamilySearchAuthorizationUrl() {
+  return `${env.FS_AUTH_BASE_URL.replace(/\/+$/, "")}/authorization`;
+}
+
+function getFamilySearchTokenUrl() {
+  return `${env.FS_AUTH_BASE_URL.replace(/\/+$/, "")}/token`;
+}
 
 export async function exchangeAuthorizationCode(params: {
   code: string;
@@ -46,7 +47,7 @@ export async function exchangeAuthorizationCode(params: {
     code_verifier: params.codeVerifier,
   });
 
-  const res = await fetch(tokenUrl, {
+  const res = await fetchWithTimeout(getFamilySearchTokenUrl(), {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -73,7 +74,7 @@ export async function refreshAccessToken(refreshToken: string) {
     client_id: env.FS_APP_KEY,
   });
 
-  const res = await fetch(tokenUrl, {
+  const res = await fetchWithTimeout(getFamilySearchTokenUrl(), {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -95,15 +96,7 @@ export async function refreshAccessToken(refreshToken: string) {
 export async function fetchCurrentUser(
   accessToken: string
 ): Promise<CurrentUserProfile | undefined> {
-  console.log("[fetchCurrentUser] Starting fetch for current tree person");
-  console.log("[fetchCurrentUser] API Base URL:", env.FS_API_BASE_URL);
-  console.log(
-    "[fetchCurrentUser] Token prefix:",
-    accessToken.substring(0, 20) + "..."
-  );
-
-  // Use the correct endpoint to get current user's person ID
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `${env.FS_API_BASE_URL.replace(/\/+$/, "")}/platform/tree/current-person`,
     {
       headers: buildHeaders(accessToken),
@@ -112,21 +105,11 @@ export async function fetchCurrentUser(
     }
   );
 
-  console.log("[fetchCurrentUser] Response status:", res.status);
-  console.log(
-    "[fetchCurrentUser] Response headers:",
-    Object.fromEntries(res.headers.entries())
-  );
-
-  // The API returns 303 with Location header containing the person URL
   if (res.status === 303) {
     const location = res.headers.get("Location");
-    console.log("[fetchCurrentUser] Redirect location:", location);
 
     if (location) {
-      // Extract person ID from URL like: /platform/tree/persons/XXXX-XXX
       const personId = location.split("/").filter(Boolean).pop();
-      console.log("[fetchCurrentUser] Extracted personId:", personId);
 
       if (personId) {
         return {
@@ -139,50 +122,26 @@ export async function fetchCurrentUser(
       }
     }
 
-    console.warn("[fetchCurrentUser] No person ID found in Location header");
     return undefined;
   }
 
   if (res.status === 401) {
-    // Log the error body for debugging
-    try {
-      const errorText = await res.text();
-      console.error("[fetchCurrentUser] 401 Error body:", errorText);
-    } catch (e) {
-      console.error("[fetchCurrentUser] Could not read error body");
-    }
-    console.warn(
-      "[fetchCurrentUser] Unauthorized (401) - Token may be invalid or missing permissions"
-    );
     return undefined;
   }
 
   if (!res.ok) {
     const text = await res.text();
-    console.error("[fetchCurrentUser] Error response:", {
-      status: res.status,
-      statusText: res.statusText,
-      body: text,
-    });
     throw new Error(
       `Failed to load FamilySearch current person: ${res.status} ${res.statusText} — ${text}`
     );
   }
 
-  // If we get here, try to parse as JSON (some responses might be 200 OK)
   try {
     const payload = await res.json();
-    console.log("[fetchCurrentUser] Payload received:", payload);
-
-    // Try to extract person ID from various possible structures
     const personId =
       payload?.persons?.[0]?.id ?? payload?.person?.id ?? payload?.id;
 
     if (personId) {
-      console.log(
-        "[fetchCurrentUser] Extracted personId from payload:",
-        personId
-      );
       return {
         personId,
         id: undefined,
@@ -191,11 +150,10 @@ export async function fetchCurrentUser(
         email: undefined,
       };
     }
-  } catch (err) {
-    console.error("[fetchCurrentUser] Failed to parse response as JSON:", err);
+  } catch {
+    return undefined;
   }
 
-  console.warn("[fetchCurrentUser] Could not extract person ID");
   return undefined;
 }
 
@@ -213,7 +171,7 @@ export class FamilySearchClient {
   }
 
   public async request<T>(path: string, init?: RequestInit): Promise<T> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
+    const res = await fetchWithTimeout(`${this.baseUrl}${path}`, {
       ...init,
       headers: {
         ...buildHeaders(this.accessToken),
@@ -259,6 +217,22 @@ export class FamilySearchAuthError extends Error {
   }
 }
 
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit = {}
+) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FAMILYSEARCH_TIMEOUT_MS);
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: init.signal ?? controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export interface FamilySearchContext {
   session: IronSession<AppSessionData>;
   auth: FamilySearchAuthState;
@@ -268,16 +242,6 @@ export interface FamilySearchContext {
 export async function getFamilySearchContext(): Promise<FamilySearchContext> {
   const session = await getSession();
   let auth = session.familySearch;
-
-  console.log("[getFamilySearchContext] Session state:", {
-    hasAuth: !!auth,
-    hasPendingAuth: !!session.pendingAuth,
-    authKeys: auth ? Object.keys(auth) : [],
-    hasAccessToken: auth ? !!auth.accessToken : false,
-    hasRefreshToken: auth ? !!auth.refreshToken : false,
-    personId: auth?.personId,
-    expiresAt: auth ? new Date(auth.expiresAt).toISOString() : null,
-  });
 
   if (!auth) {
     throw new FamilySearchAuthError(

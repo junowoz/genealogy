@@ -8,7 +8,7 @@ export async function ensureDir(dir: string) {
 
 export async function writeFileSafe(dest: string, data: Buffer | string) {
   await ensureDir(path.dirname(dest));
-  await fsp.writeFile(dest, data);
+  await fsp.writeFile(dest, data, { mode: 0o600 });
 }
 
 export async function fileExists(p: string): Promise<boolean> {
@@ -19,4 +19,3 @@ export async function fileExists(p: string): Promise<boolean> {
     return false;
   }
 }
-

@@ -31,11 +31,6 @@ export class FamilySearchSearchAdapter implements SearchAdapter {
       }
       const query = buildTreeSearchQuery(params, resolvedPlace);
       const path = `/platform/tree/search?${query.toString()}`;
-      // For search endpoints, prefer GEDCOM X Atom feed
-      try {
-        // Lightweight debug for visibility in server logs
-        console.log("[FamilySearchSearchAdapter] GET", path);
-      } catch {}
       const data = await client.get<any>(path, {
         headers: { Accept: "application/x-gedcomx-atom+json" },
       });

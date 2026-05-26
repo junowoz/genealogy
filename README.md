@@ -1,258 +1,215 @@
-# Genealogy | FamilySearch Hub
+# Genealogy FamilySearch MCP
 
-**URL:** https://genealogy.junowoz.com
+Site e servidor MCP para consultar dados do FamilySearch pelo ChatGPT. O projeto entrega:
 
-Sistema que integra a API FamilySearch ao ChatGPT via MCP (Model Context Protocol) e oferece interface web com funcionalidades de busca genealógica e ranking inteligente.
+- Web app em Next.js para login, busca, detalhes de pessoas, parentes, pedigree, hints, mudanças e Memories.
+- Endpoint MCP Streamable HTTP em `/api/mcp` para conectar no ChatGPT.
+- Widget do Apps SDK para renderizar resultados de busca dentro do ChatGPT.
+- OAuth 2.0 + PKCE com FamilySearch.
+- PostgreSQL + Prisma para persistir sessões MCP.
+- Docker Compose pronto para Dokploy/VPS.
 
-O projeto entrega um conector MCP para o FamilySearch integrado ao ChatGPT e um site web com ranking inteligente, score de probabilidade e agrupamento visual. Inclui 9 ferramentas MCP e autenticação OAuth 2.0 com PKCE.
+## Arquitetura
 
----
+```
+ChatGPT / Browser
+       |
+       | HTTPS
+       v
+Next.js app + /api/mcp
+       |
+       | Prisma
+       v
+PostgreSQL
+       |
+       | OAuth/API
+       v
+FamilySearch
+```
 
-## Instalação
+O MCP usa o transporte HTTP moderno do Model Context Protocol: um endpoint único com `GET` e `POST` em `/api/mcp`. O servidor registra 9 tools read-only e um recurso de widget `ui://widget/genealogy-search.html`.
 
-### Pré-requisitos
+## Requisitos
 
-- Node.js 18+ e npm
-- PostgreSQL
-- Chave de aplicativo FamilySearch Beta
+- Node.js 20+
+- npm
+- Docker e Docker Compose para deploy completo
+- App key do FamilySearch
+- Domínio HTTPS público para usar no ChatGPT
 
-### Variáveis de Ambiente
+## Variáveis De Ambiente
 
-Crie um arquivo `.env` na raiz do projeto:
+Copie `.env.example` para `.env` e preencha:
 
 ```ini
-# FamilySearch Beta
-FS_APP_KEY=sua-app-key-beta-aqui
-FS_REDIRECT_URI=https://genealogy.junowoz.com/api/auth/callback
+FS_APP_KEY=YOUR_FAMILYSEARCH_BETA_APP_KEY
+FS_REDIRECT_URI=https://your-domain.example.com/api/auth/callback
 FS_AUTH_BASE_URL=https://identbeta.familysearch.org/cis-web/oauth2/v3
 FS_API_BASE_URL=https://apibeta.familysearch.org
 FS_OAUTH_SCOPE=https://api.familysearch.org/auth/familytree.read
 
-# App
-NEXT_PUBLIC_APP_ORIGIN=https://genealogy.junowoz.com
-SESSION_SECRET=troque-por-uma-chave-aleatoria-com-32-ou-mais-caracteres
+NEXT_PUBLIC_APP_ORIGIN=https://your-domain.example.com
+MCP_ALLOWED_ORIGINS=https://chatgpt.com,https://chat.openai.com,https://your-domain.example.com
 
-# Database
-DATABASE_URL=postgresql://user:password@host:5432/genealogy-db
+SESSION_SECRET=generate-a-random-32-plus-character-secret
+TOKEN_ENCRYPTION_KEY=generate-another-random-32-plus-character-secret
+
+POSTGRES_DB=genealogy
+POSTGRES_USER=genealogy
+POSTGRES_PASSWORD=generate-a-strong-database-password
+APP_PORT=3000
+RUN_MIGRATIONS=true
 ```
 
-### Setup
+Notas:
+
+- `SESSION_SECRET` assina cookies de sessão.
+- `TOKEN_ENCRYPTION_KEY` criptografa tokens OAuth persistidos no banco.
+- `NEXT_PUBLIC_APP_ORIGIN` deve ser a URL pública exata do app.
+- `FS_REDIRECT_URI` deve bater com o callback cadastrado no FamilySearch.
+- Em Docker Compose, `DATABASE_URL` é montado automaticamente apontando para o serviço `db`.
+
+## Desenvolvimento Local
 
 ```bash
-# Instalar dependências
 npm install
-
-# Gerar widget do Apps SDK
 npm run widget:build
-
-# Gerar Prisma client
 npm run prisma:generate
-
-# Executar migrações
-npx prisma migrate dev
-
-# Iniciar servidor de desenvolvimento
+npm run typecheck
 npm run dev
 ```
 
-### Deploy com Docker
+Com um Postgres local, rode:
 
 ```bash
-# Build
-docker build -t genealogy:latest .
-
-# Run
-docker run --rm -p 3000:3000 --env-file .env genealogy:latest
-
-# Migrações
-docker exec -it <container> npx prisma migrate deploy
+npm run prisma:migrate
 ```
 
----
+## Deploy Com Docker Compose
 
-## Como Usar
-
-### Via ChatGPT (MCP)
-
-1. Acesse **Configurações → Conectores** no ChatGPT
-2. Adicione o endpoint: `https://genealogy.junowoz.com/api/mcp`
-3. Configure **Authentication** como "No authentication"
-4. Quando solicitado, faça login no FamilySearch
-5. Use comandos como:
-   - "Qual é meu Person ID?"
-   - "Busque por José Silva nascido em 1850"
-   - "Mostre os detalhes de ABCD-1234"
-   - "Quem são os pais de ABCD-1234?"
-
-### Via Site Web
-
-1. Acesse https://genealogy.junowoz.com
-2. Faça login via FamilySearch
-3. Use a busca na página inicial para encontrar pessoas
-4. Navegue pela árvore genealógica clicando nos parentes
-5. Visualize detalhes completos de cada pessoa
-
----
-
-## Ferramentas MCP
-
-O sistema oferece 9 ferramentas MCP para integração com ChatGPT:
-
-| Tool                     | Função                          | API Equivalente                              |
-| ------------------------ | ------------------------------- | -------------------------------------------- |
-| `fs.search_people`       | Busca pessoas com ranking       | `GET /platform/tree/search`                  |
-| `fs.places_autocomplete` | Autocomplete de lugares         | `GET /platform/places`                       |
-| `fs.get_ancestry`        | Árvore ancestral (8 gerações)   | `GET /platform/tree/ancestry`                |
-| `fs.get_descendancy`     | Árvore descendente (6 gerações) | `GET /platform/tree/descendancy`             |
-| `fs.hints_summary`       | Resumo de hints                 | `GET /platform/tree/persons/{pid}/matches`   |
-| `fs.change_log`          | Histórico de mudanças           | `GET /platform/tree/persons/{pid}/changes`   |
-| `fs.person_details`      | Detalhes completos da pessoa    | `GET /platform/tree/persons/{pid}`           |
-| `fs.person_relatives`    | Parentes diretos                | `GET /platform/tree/persons/{pid}?relatives` |
-| `fs.current_user`        | Person ID do usuário            | `GET /platform/tree/current-person`          |
-
----
-
-## API Web
-
-### Rotas Principais
-
-| Método     | Rota                              | Função                    |
-| ---------- | --------------------------------- | ------------------------- |
-| `GET`      | `/api/search`                     | Busca pessoas com ranking |
-| `GET`      | `/api/places`                     | Autocomplete lugares      |
-| `GET`      | `/api/person/[pid]`               | Detalhes da pessoa        |
-| `GET`      | `/api/person/[pid]/relatives`     | Parentes diretos          |
-| `GET`      | `/api/pedigree/[pid]/ancestry`    | Árvore ancestral          |
-| `GET`      | `/api/pedigree/[pid]/descendancy` | Árvore descendente        |
-| `GET`      | `/api/hints/[pid]`                | Resumo de hints           |
-| `GET`      | `/api/person/[pid]/changes`       | Histórico de mudanças     |
-| `GET`      | `/api/auth/me`                    | Person ID do usuário      |
-| `GET`      | `/api/auth/login`                 | Inicia OAuth              |
-| `GET`      | `/api/auth/callback`              | Callback OAuth            |
-| `POST/GET` | `/api/auth/logout`                | Logout                    |
-
-### Exemplo de Uso da API
-
-```javascript
-// Busca pessoas
-const response = await fetch("/api/search?name=João&birthYear=1850");
-const { results, grouped } = await response.json();
-
-// Detalhes pessoa
-const person = await fetch("/api/person/ABCD-123");
-const { person, relationships } = await person.json();
-
-// Parentes
-const relatives = await fetch("/api/person/ABCD-123/relatives");
-const { parents, spouses, children } = await relatives.json();
-```
-
----
-
-## Autenticação
-
-O sistema usa OAuth 2.0 com PKCE para autenticação segura com o FamilySearch.
-
-### Fluxo de Autenticação
-
-1. **Login** (`GET /api/auth/login`)
-
-   - Gera code_verifier e code_challenge (PKCE)
-   - Salva state em cookie temporário
-   - Redireciona para FamilySearch
-
-2. **Callback** (`GET /api/auth/callback`)
-
-   - Valida state e code
-   - Troca code por tokens (access + refresh)
-   - Persiste tokens em sessão segura (cookie httpOnly)
-
-3. **Sessões**
-
-   - `state=web` → sessão HTTP do usuário
-   - `state=mcp:<sessionId>` → também salva para MCP store
-
-4. **Logout** (`POST /api/auth/logout`)
-   - Limpa cookie de sessão
-   - Remove tokens do MCP store
-
-### Segurança
-
-- Cookies httpOnly com SESSION_SECRET
-- Refresh automático de tokens
-- Isolamento de sessões por usuário
-- PKCE para prevenção de ataques
-- Validação rigorosa de states/codes
-
----
-
-## Estrutura do Projeto
-
-```
-/
-├── app/                          # Next.js 15 App Router
-│   ├── api/                      # API Routes
-│   │   ├── auth/                 # OAuth 2.0 + PKCE
-│   │   ├── search/               # Busca de pessoas
-│   │   ├── places/               # Autocomplete lugares
-│   │   ├── person/[pid]/         # Detalhes pessoa
-│   │   ├── pedigree/[pid]/       # Árvores genealógicas
-│   │   ├── hints/[pid]/          # Hints FamilySearch
-│   │   └── memories/             # Upload + OCR
-│   ├── person/[pid]/             # Páginas de pessoa
-│   ├── memories/                 # Página upload
-│   └── auth/linked/              # Success OAuth
-├── src/
-│   ├── adapters/familysearch/    # Integração FamilySearch
-│   ├── mcp/                      # MCP Server + Tools
-│   ├── lib/                      # Utils + clients
-│   ├── ui/                       # Componentes React
-│   └── domain/                   # Types + contratos
-├── pages/api/mcp.ts              # MCP endpoint (SSE)
-├── widgets/                      # Apps SDK widget
-├── workers/memories/             # Python OCR worker
-└── prisma/                       # Schema + migrations
-```
-
----
-
-## Desenvolvimento
-
-### Comandos Disponíveis
+O compose sobe app, banco, volumes persistentes, healthchecks e migrações Prisma automaticamente:
 
 ```bash
-npm run dev              # Servidor de desenvolvimento
-npm run build            # Build para produção
-npm run typecheck        # Verificação TypeScript
-npm run widget:build     # Build do widget Apps SDK
-npx prisma studio        # Interface visual do banco
-npx prisma migrate dev   # Migrações desenvolvimento
-npx prisma migrate deploy # Migrações produção
+cp .env.example .env
+# edite .env
+docker compose up -d --build
 ```
 
-### Testar MCP Localmente
+Serviços:
+
+- `app`: Next.js standalone em `:3000`.
+- `db`: PostgreSQL 16.
+- `genealogy-data`: uploads e filas do worker.
+- `postgres-data`: dados do Postgres.
+
+O entrypoint executa `prisma migrate deploy` antes de iniciar o servidor. Para desligar:
 
 ```bash
-npx @modelcontextprotocol/inspector --server http://localhost:3000/api/mcp
+docker compose down
 ```
 
----
+## Deploy No Dokploy
 
-## Stack Tecnológico
+1. Crie um projeto Docker Compose no Dokploy apontando para este repositório.
+2. Use `docker-compose.yml` da raiz.
+3. Configure as variáveis do `.env`.
+4. Na aba Domains do Dokploy, associe seu domínio ao serviço `app` na porta `3000`.
+5. Garanta HTTPS no domínio.
+6. Cadastre `https://seu-dominio/api/auth/callback` no FamilySearch.
+7. Abra `https://seu-dominio/api/mcp`; deve responder `{"status":"ready"}`.
 
-- **Frontend:** Next.js 15 (App Router) + React 18 + TypeScript + Tailwind CSS
-- **Backend:** Next.js API Routes + Node.js
-- **Banco:** PostgreSQL + Prisma ORM
-- **Autenticação:** OAuth 2.0 + PKCE + iron-session
-- **Integração:** FamilySearch API + GEDCOM X parsing
-- **MCP:** @modelcontextprotocol/sdk + StreamableHTTPServerTransport
+Dokploy recomenda configurar domínios pelo painel para Docker Compose; o compose não precisa incluir labels Traefik manuais.
 
----
+## Conectar No ChatGPT
 
-## Certificações FamilySearch
+1. Acesse as configurações de conectores/apps do ChatGPT.
+2. Adicione um servidor MCP remoto.
+3. Use a URL:
 
-- Authentication Compatible
-- Read Compatible
-- Record Hinting Compatible (resumo/redirecionamento)
+```text
+https://your-domain.example.com/api/mcp
+```
 
-Operações de escrita (criar/editar pessoas) não estão implementadas por exigirem certificações adicionais.
+4. Salve o conector.
+5. Na primeira chamada de tool, o MCP devolverá um link de login FamilySearch.
+6. Abra o link, conclua o OAuth e volte para o ChatGPT.
+
+## Tools MCP
+
+| Tool | Descrição |
+| --- | --- |
+| `fs.current_user` | Retorna o Person ID do usuário logado. |
+| `fs.search_people` | Busca pessoas no FamilySearch com ranking e widget. |
+| `fs.places_autocomplete` | Sugere lugares do Place Authority. |
+| `fs.person_details` | Retorna detalhes completos de uma pessoa. |
+| `fs.person_relatives` | Lista pais, cônjuges e filhos. |
+| `fs.get_ancestry` | Retorna pedigree ascendente. |
+| `fs.get_descendancy` | Retorna pedigree descendente. |
+| `fs.hints_summary` | Resume hints de registros/árvore. |
+| `fs.change_log` | Retorna mudanças recentes de uma pessoa. |
+
+Todas as tools são read-only.
+
+## Segurança
+
+Medidas implementadas:
+
+- OAuth 2.0 com PKCE.
+- State obrigatório e expira em 10 minutos.
+- Cookies `httpOnly`, `sameSite=lax` e `secure` em produção.
+- Tokens MCP criptografados no banco com AES-256-GCM.
+- Nenhum segredo é necessário no build Docker.
+- CORS do MCP restrito por `MCP_ALLOWED_ORIGINS`.
+- Validação de `Origin` no endpoint MCP.
+- Limite de 1 MB para requests MCP.
+- Uma instância `McpServer` por transporte/sessão.
+- Uploads exigem login, têm limite de 10 MB e tipos permitidos.
+- IDs de pessoa/job/upload são validados antes de acessar APIs ou arquivos.
+- Headers de segurança básicos no Next.js.
+- `npm audit --omit=dev` deve retornar zero vulnerabilidades.
+
+## Testes E Validação
+
+```bash
+npm run typecheck
+npm run build
+npm audit --omit=dev
+```
+
+Smoke test MCP local:
+
+```bash
+curl -i http://localhost:3000/api/mcp
+```
+
+Initialize JSON-RPC:
+
+```bash
+curl -i -X POST http://localhost:3000/api/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"smoke","version":"0.0.1"}}}'
+```
+
+## Estrutura
+
+```
+app/                 Next.js App Router e API web
+pages/api/mcp.ts     Endpoint MCP Streamable HTTP
+src/mcp/             Registro de server, tools e auth MCP
+src/lib/             Env, sessão, Prisma, crypto e FamilySearch client
+src/adapters/        Integrações FamilySearch
+widgets/             Widget Apps SDK
+public/mcp/          Bundle gerado do widget
+prisma/              Schema e migrações
+workers/memories/    Worker Python opcional para Memories
+docker/              Entrypoint de produção
+```
+
+## Referências Oficiais
+
+- OpenAI Apps SDK: https://developers.openai.com/apps-sdk
+- Apps SDK MCP server: https://developers.openai.com/apps-sdk/build/mcp-server
+- Apps SDK security/privacy: https://developers.openai.com/apps-sdk/guides/security-privacy
+- MCP transports: https://modelcontextprotocol.io/specification/2025-06-18/basic/transports
+- Dokploy Docker Compose domains: https://docs.dokploy.com/docs/core/docker-compose/domains

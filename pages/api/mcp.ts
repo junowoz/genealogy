@@ -4,6 +4,7 @@ import {
   createTransport,
   isInitialize,
 } from "../../src/mcp/server";
+import { getAllowedMcpOrigins } from "../../src/lib/env";
 
 export const config = {
   api: {
@@ -11,11 +12,17 @@ export const config = {
   },
 };
 
+const MAX_MCP_BODY_BYTES = 1024 * 1024;
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  setCors(res);
+  if (!setCors(req, res)) {
+    res.status(403).json({ error: "origin_not_allowed" });
+    return;
+  }
+  res.setHeader("Cache-Control", "no-store");
 
   if (req.method === "OPTIONS") {
     res.status(204).end();
@@ -31,6 +38,10 @@ export default async function handler(
       const body = rawBody.length
         ? safeJsonParse(rawBody.toString("utf8"))
         : undefined;
+      if (rawBody.length && body === undefined) {
+        res.status(400).json({ error: "invalid_json" });
+        return;
+      }
 
       let transport = getTransport(sessionId);
       if (!transport) {
@@ -50,12 +61,11 @@ export default async function handler(
     if (req.method === "GET") {
       const transport = getTransport(sessionId);
       if (!transport) {
-        // Retorna status OK para probes/health checks do OpenAI
         res.status(200).json({
           status: "ready",
           message:
-            "MCP server is ready. POST to /initialize to start a session.",
-          version: "1.0.0",
+            "MCP server is ready. POST JSON-RPC initialize to /api/mcp to start a session.",
+          version: "0.3.0",
         });
         return;
       }
@@ -76,29 +86,52 @@ export default async function handler(
     res.setHeader("Allow", "GET,POST,DELETE,OPTIONS");
     res.status(405).send("Método não permitido");
   } catch (err) {
-    console.error("[mcp] erro", err);
+    console.error("[mcp] request failed", (err as Error).message);
     if (!res.headersSent) {
-      res
-        .status(500)
-        .json({ error: "Erro interno", message: (err as Error).message });
+      res.status(500).json({ error: "internal_error" });
     }
   }
 }
 
-function setCors(res: NextApiResponse) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, MCP-Session-Id");
+function setCors(req: NextApiRequest, res: NextApiResponse) {
+  const origin = req.headers.origin;
+  const allowedOrigins = getAllowedMcpOrigins();
+  allowedOrigins.add("https://chatgpt.com");
+  allowedOrigins.add("https://chat.openai.com");
+
+  if (origin) {
+    const normalizedOrigin = origin.replace(/\/+$/, "");
+    if (!allowedOrigins.has(normalizedOrigin)) {
+      return false;
+    }
+    res.setHeader("Access-Control-Allow-Origin", normalizedOrigin);
+    res.setHeader("Vary", "Origin");
+  }
+
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Accept, Content-Type, MCP-Session-Id, Mcp-Session-Id, MCP-Protocol-Version"
+  );
+  res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+  return true;
 }
 
 function readBody(req: NextApiRequest) {
   return new Promise<Buffer>((resolve, reject) => {
     const chunks: Buffer[] = [];
+    let size = 0;
     req.on("data", (chunk: Buffer | string) => {
       const buffer = typeof chunk === "string" ? Buffer.from(chunk) : chunk;
+      size += buffer.byteLength;
+      if (size > MAX_MCP_BODY_BYTES) {
+        reject(new Error("MCP request body too large"));
+        req.destroy();
+        return;
+      }
       chunks.push(buffer);
     });
-    req.on("end", () => resolve(Buffer.concat(chunks as any)));
+    req.on("end", () => resolve(Buffer.concat(chunks)));
     req.on("error", (err: Error) => reject(err));
   });
 }

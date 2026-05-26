@@ -27,23 +27,28 @@ export interface AppSessionData {
   familySearch?: FamilySearchAuthState;
 }
 
-const sessionOptions: SessionOptions = {
-  cookieName: "genealogy_session",
-  password: env.SESSION_SECRET,
-  cookieOptions: {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: true, // Sempre HTTPS em produção
-    path: "/",
-  },
-  ttl: 60 * 60 * 24 * 7, // 7 days
-};
+function getSessionOptions(): SessionOptions {
+  const secureCookie = process.env.NODE_ENV !== "development";
+
+  return {
+    cookieName: "genealogy_session",
+    password: env.SESSION_SECRET,
+    cookieOptions: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: secureCookie,
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    },
+    ttl: 60 * 60 * 24 * 7,
+  };
+}
 
 export async function getSession() {
   const cookieStore = await cookies();
   const session = await getIronSession<AppSessionData>(
     cookieStore,
-    sessionOptions
+    getSessionOptions()
   );
   return session;
 }

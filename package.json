@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:migrate": "prisma migrate deploy && node server.js",
     "typecheck": "tsc --noEmit",
     "widget:build": "node scripts/build-widget.mjs",
     "prisma:generate": "prisma generate",
@@ -13,10 +14,10 @@
     "worker:memories": "cd workers/memories && python3 worker.py"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.20.1",
-    "@prisma/client": "6.17.1",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "@prisma/client": "6.19.3",
     "iron-session": "8.0.4",
-    "next": "15.5.6",
+    "next": "15.5.18",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "zod": "3.23.8",
@@ -28,9 +29,17 @@
     "@types/react-dom": "18.3.0",
     "autoprefixer": "10.4.20",
     "esbuild": "0.25.11",
-    "prisma": "6.17.1",
-    "postcss": "8.4.47",
+    "prisma": "6.19.3",
+    "postcss": "8.5.10",
     "tailwindcss": "3.4.12",
     "typescript": "5.6.2"
+  },
+  "overrides": {
+    "brace-expansion": "2.0.3",
+    "glob": "10.5.0",
+    "minimatch": "9.0.7",
+    "picomatch": "2.3.2",
+    "postcss": "8.5.10",
+    "yaml": "2.8.3"
   }
 }

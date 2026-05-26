@@ -9,12 +9,13 @@ from rich import print
 from pipeline import run_pipeline
 
 ROOT = Path(__file__).resolve().parents[2]
-QUEUE = ROOT / 'queue'
+STORAGE_ROOT = Path(os.getenv('APP_STORAGE_DIR') or ROOT)
+QUEUE = STORAGE_ROOT / 'queue'
 PENDING = QUEUE / 'pending'
 PROCESSING = QUEUE / 'processing'
 RESULTS = QUEUE / 'results'
 FAILED = QUEUE / 'failed'
-UPLOADS = ROOT / 'uploads'
+UPLOADS = STORAGE_ROOT / 'uploads'
 
 for d in (PENDING, PROCESSING, RESULTS, FAILED):
     d.mkdir(parents=True, exist_ok=True)
@@ -71,4 +72,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

@@ -12,7 +12,6 @@ const QuerySchema = z.object({
 });
 
 export async function GET(req: Request) {
-  console.log("[Search API] Request received");
   const url = new URL(req.url);
   const q = Object.fromEntries(url.searchParams.entries());
   const parsed = QuerySchema.safeParse(q);
@@ -25,7 +24,6 @@ export async function GET(req: Request) {
   const { name, birthYearFrom, birthYearTo, placeId, placeText } = parsed.data;
 
   try {
-    console.log("[Search API] Creating FamilySearchSearchAdapter");
     const adapter = new FamilySearchSearchAdapter();
     const candidates = await adapter.searchPersons({
       name,
