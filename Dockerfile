@@ -35,7 +35,9 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY docker/entrypoint.sh /entrypoint.sh
 
-RUN chmod +x /entrypoint.sh \
+RUN test -d ./node_modules/effect \
+  && node ./node_modules/prisma/build/index.js --version >/dev/null \
+  && chmod +x /entrypoint.sh \
   && mkdir -p /data .next/cache \
   && chown -R nextjs:nodejs /data .next
 
