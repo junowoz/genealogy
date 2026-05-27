@@ -11,7 +11,10 @@ import {
   FamilySearchClient,
   ensureFreshAuth,
 } from "../lib/familysearch/client";
-import { encodeFamilySearchId, normalizeFamilySearchId } from "../lib/familysearch/ids";
+import {
+  encodeFamilySearchId,
+  normalizeFamilySearchId,
+} from "../lib/familysearch/ids";
 import { getMcpAuth, saveMcpAuth, clearMcpAuth } from "./store";
 import { FamilySearchSearchAdapter } from "../adapters/familysearch/searchAdapter";
 import { FamilySearchPlaceAdapter } from "../adapters/familysearch/placeAdapter";
@@ -19,8 +22,10 @@ import { FamilySearchPedigreeAdapter } from "../adapters/familysearch/pedigreeAd
 import { FamilySearchHintsAdapter } from "../adapters/familysearch/hintsAdapter";
 import { FamilySearchChangeAdapter } from "../adapters/familysearch/changeAdapter";
 
-const SEARCH_WIDGET_URI = "ui://widget/genealogy-search.html";
+const SEARCH_WIDGET_URI = "ui://widget/genealogy-search-v2.html";
 const MCP_SESSION_ID_PATTERN = /^[\x21-\x7e]{1,256}$/;
+const MCP_INSTRUCTIONS =
+  "Use este servidor para consultas genealógicas read-only no FamilySearch. Primeiro chame fs.current_user quando precisar do Person ID do usuário. Para localizar pessoas, use search ou fs.search_people; depois use fetch ou fs.person_details para detalhes. Se uma tool pedir login, mostre o link de autenticação ao usuário.";
 
 const transports = new Map<string, StreamableHTTPServerTransport>();
 
@@ -32,6 +37,7 @@ function buildMcpServer() {
       description: "Genealogy · consultas no FamilySearch",
     },
     {
+      instructions: MCP_INSTRUCTIONS,
       capabilities: {
         logging: {},
         tools: {},
@@ -78,6 +84,35 @@ function loadWidgetTemplate() {
   </body>
 </html>
   `.trim();
+}
+
+function buildFamilySearchPersonUrl(pid: string) {
+  return `https://www.familysearch.org/tree/person/details/${encodeURIComponent(
+    pid
+  )}`;
+}
+
+function stringifyPersonForFetch(person: any) {
+  const names = Array.isArray(person?.names) ? person.names : [];
+  const facts = Array.isArray(person?.facts) ? person.facts : [];
+  const preferredName = names.find((name: any) => name?.preferred) ?? names[0];
+  const nameText =
+    preferredName?.nameForms?.[0]?.fullText ??
+    preferredName?.nameForms?.[0]?.parts?.map((part: any) => part?.value).filter(Boolean).join(" ") ??
+    person?.id;
+
+  const factLines = facts
+    .map((fact: any) => {
+      const type = String(fact?.type ?? "").split("/").pop() ?? "Fact";
+      const date = fact?.date?.original ?? fact?.date?.formal;
+      const place = fact?.place?.original ?? fact?.place?.description;
+      return [type, date, place].filter(Boolean).join(": ");
+    })
+    .filter(Boolean);
+
+  return [`Person ID: ${person?.id}`, `Name: ${nameText}`, ...factLines].join(
+    "\n"
+  );
 }
 
 mcpServer.registerResource(
@@ -138,6 +173,142 @@ const searchOutputSchema = {
   total: z.number(),
   candidates: z.array(z.any()),
 };
+
+const standardSearchInputSchema = {
+  query: z
+    .string()
+    .trim()
+    .min(1)
+    .max(160)
+    .describe("Nome, Person ID ou texto de busca genealógica"),
+};
+
+const standardSearchOutputSchema = {
+  results: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      url: z.string().url(),
+    })
+  ),
+};
+
+registerToolUnsafe(
+  "search",
+  {
+    title: "Search FamilySearch people",
+    description:
+      "Use this when ChatGPT needs to search FamilySearch people by name or Person ID and return citation-ready results.",
+    inputSchema: standardSearchInputSchema,
+    outputSchema: standardSearchOutputSchema,
+    annotations: readOnlyAnnotations,
+  },
+  async (args: any, extra: any) => {
+    const { sessionId } = extra;
+    try {
+      const { client } = await resolveClientForSession(sessionId);
+      const pidLike = /^[A-Za-z0-9-]{1,32}$/.test(args.query)
+        ? args.query
+        : undefined;
+
+      if (pidLike) {
+        const pid = normalizeFamilySearchId(pidLike);
+        const structuredContent = {
+          results: [
+            {
+              id: pid,
+              title: `FamilySearch person ${pid}`,
+              url: buildFamilySearchPersonUrl(pid),
+            },
+          ],
+        };
+        return {
+          structuredContent,
+          content: [{ type: "text", text: JSON.stringify(structuredContent) }],
+        };
+      }
+
+      const adapter = new FamilySearchSearchAdapter({ client });
+      const candidates = await adapter.searchPersons({ name: args.query });
+      const structuredContent = {
+        results: candidates.slice(0, 10).map((candidate) => {
+          const pid = candidate.person.id;
+          return {
+            id: pid,
+            title: candidate.person.name ?? `FamilySearch person ${pid}`,
+            url: candidate.person.fsUrl ?? buildFamilySearchPersonUrl(pid),
+          };
+        }),
+      };
+      return {
+        structuredContent,
+        content: [{ type: "text", text: JSON.stringify(structuredContent) }],
+      };
+    } catch (err) {
+      return handleToolError(err, sessionId);
+    }
+  }
+);
+
+const standardFetchInputSchema = {
+  id: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9-]{1,32}$/)
+    .describe("FamilySearch Person ID returned by search"),
+};
+
+const standardFetchOutputSchema = {
+  id: z.string(),
+  title: z.string(),
+  text: z.string(),
+  url: z.string().url(),
+  metadata: z.record(z.string(), z.string()).optional(),
+};
+
+registerToolUnsafe(
+  "fetch",
+  {
+    title: "Fetch FamilySearch person",
+    description:
+      "Use this when ChatGPT needs citation-ready details for a FamilySearch Person ID returned by search.",
+    inputSchema: standardFetchInputSchema,
+    outputSchema: standardFetchOutputSchema,
+    annotations: readOnlyAnnotations,
+  },
+  async (args: any, extra: any) => {
+    const { sessionId } = extra;
+    try {
+      const { client } = await resolveClientForSession(sessionId);
+      const pid = normalizeFamilySearchId(args.id);
+      const data = await client.get<any>(
+        `/platform/tree/persons/${encodeFamilySearchId(pid)}`
+      );
+      const person = data?.persons?.[0];
+      if (!person) {
+        throw new Error(`Pessoa ${pid} não encontrada.`);
+      }
+      const title =
+        person?.names?.find((name: any) => name?.preferred)?.nameForms?.[0]
+          ?.fullText ??
+        person?.names?.[0]?.nameForms?.[0]?.fullText ??
+        `FamilySearch person ${pid}`;
+      const structuredContent = {
+        id: pid,
+        title,
+        text: stringifyPersonForFetch(person),
+        url: buildFamilySearchPersonUrl(pid),
+        metadata: { source: "FamilySearch" },
+      };
+      return {
+        structuredContent,
+        content: [{ type: "text", text: JSON.stringify(structuredContent) }],
+      };
+    } catch (err) {
+      return handleToolError(err, sessionId);
+    }
+  }
+);
 
 registerToolUnsafe(
   "fs.search_people",

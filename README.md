@@ -27,7 +27,7 @@ PostgreSQL
 FamilySearch
 ```
 
-O MCP usa o transporte HTTP moderno do Model Context Protocol: um endpoint único com `GET` e `POST` em `/api/mcp`. O servidor registra 9 tools read-only e um recurso de widget `ui://widget/genealogy-search.html`.
+O MCP usa o transporte HTTP moderno do Model Context Protocol: um endpoint único com `GET` e `POST` em `/api/mcp`. O servidor registra 11 tools read-only e um recurso de widget versionado `ui://widget/genealogy-search-v2.html`.
 
 ## Requisitos
 
@@ -138,6 +138,8 @@ https://your-domain.example.com/api/mcp
 
 | Tool | Descrição |
 | --- | --- |
+| `search` | Busca padrão compatível com conectores/company knowledge e retorna resultados citáveis. |
+| `fetch` | Busca padrão para obter detalhes citáveis por Person ID. |
 | `fs.current_user` | Retorna o Person ID do usuário logado. |
 | `fs.search_people` | Busca pessoas no FamilySearch com ranking e widget. |
 | `fs.places_autocomplete` | Sugere lugares do Place Authority. |
